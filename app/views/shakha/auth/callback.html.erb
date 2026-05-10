@@ -1,0 +1,12 @@
+<% content_for :title, "Signing In..." %>
+
+<div class="shakha-container">
+  <div class="shakha-card shakha-card-center">
+    <div class="shakha-loading">
+      <div class="shakha-spinner"></div>
+      <p>Signing you in...</p>
+    </div>
+  </div>
+</div>
+
+<meta http-equiv="refresh" content="2;url=<%= @return_to || "/" %>">
