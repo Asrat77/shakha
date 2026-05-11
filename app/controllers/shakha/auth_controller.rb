@@ -155,7 +155,7 @@ module Shakha
 
       user = Shakha::User.find_or_initialize_by(pairwise_sub: pairwise_sub, client: client)
 
-      if params[:request_pii] && payload["email"]
+      if payload["email"]
         user.assign_attributes(
           email: payload["email"],
           name: payload["name"],
