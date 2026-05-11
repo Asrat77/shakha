@@ -93,9 +93,15 @@ module Shakha
       origin = request.origin || Shakha.config.app_origin
       origin_uri = URI.parse(origin).origin
 
-      Shakha::Client.find_or_create_by!(origin: origin_uri) do |client|
-        client.name = URI.parse(origin).host
+      if Shakha.config.embedded?
+        Shakha::Client.find_or_create_by!(origin: origin_uri) do |client|
+          client.name = URI.parse(origin).host
+        end
+      else
+        Shakha::Client.find_by!(origin: origin_uri)
       end
+    rescue ActiveRecord::RecordNotFound
+      raise ConfigurationError, "Unknown client origin: #{origin_uri}. Register this origin in shakha_clients first."
     end
 
     def build_google_auth_url(pkce)
