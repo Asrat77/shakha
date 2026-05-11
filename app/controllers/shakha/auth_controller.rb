@@ -11,10 +11,11 @@ module Shakha
 
     def new
       @client = find_or_create_client
-      @return_to = params[:return_to] || "/"
+      @return_to = sanitize_return_to(params[:return_to])
     end
 
     def authorize
+      params[:return_to] = sanitize_return_to(params[:return_to])
       pkce = create_pkce_bundle
       @client = find_or_create_client
 
@@ -53,6 +54,28 @@ module Shakha
     end
 
     private
+
+    def sanitize_return_to(raw)
+      return "/" if raw.blank?
+
+      uri = URI.parse(raw)
+      return "/" if uri.host.present? && ![app_origin_host, client_origin_host].include?(uri.host)
+      return "/" unless uri.path.present? && uri.path.start_with?("/")
+
+      uri.path
+    rescue URI::InvalidURIError
+      "/"
+    end
+
+    def app_origin_host
+      URI.parse(Shakha.config.app_origin).host
+    end
+
+    def client_origin_host
+      URI.parse(Shakha.config.service_base_url).host
+    rescue URI::InvalidURIError
+      nil
+    end
 
     def find_or_create_client
       origin = request.origin || Shakha.config.app_origin
@@ -143,7 +166,7 @@ module Shakha
         expires: Shakha.config.session_lifetime.from_now
       }
 
-      redirect_to return_to
+      redirect_to sanitize_return_to(return_to)
     end
 
     def exchange_code_for_id_token(code, verifier)
