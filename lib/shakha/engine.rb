@@ -6,6 +6,10 @@ module Shakha
 
     config.app_middleware.use Shakha::Middleware
 
+    config.after_initialize do
+      Shakha::ConfigValidator.validate!(Shakha.config)
+    end
+
     # Engine routes - these should be relative paths
     routes do
       root to: "auth#new"
