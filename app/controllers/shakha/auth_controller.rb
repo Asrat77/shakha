@@ -178,7 +178,9 @@ module Shakha
       session_record = Shakha::Session.create!(
         user: user,
         client: client,
-        jti: SecureRandom.uuid
+        jti: SecureRandom.uuid,
+        ip_address: request.remote_ip,
+        user_agent: request.user_agent
       )
 
       cookies.encrypted[:shakha_session_token] = {
