@@ -20,8 +20,10 @@ module Shakha
       get "error" => "auth#error"
 
       get "session" => "session#show"
+      get "sessions" => "session#index"
       post "session/check" => "session#check"
       delete "session" => "session#destroy"
+      delete "sessions/:id" => "session#revoke"
 
       get ".well-known/jwks.json" => "jwks#show"
       get ".well-known/openid-configuration" => "openid#configuration"
