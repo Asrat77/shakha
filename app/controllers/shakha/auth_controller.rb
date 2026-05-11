@@ -20,15 +20,14 @@ module Shakha
 
       google_auth_url = build_google_auth_url(pkce)
 
-      redirect_to google_auth_url
+      redirect_to google_auth_url, allow_other_host: true
     end
 
     def callback
-      verifier = verify_pkce!(params[:code])
-
-      exchange_code_for_tokens(params[:code], verifier)
+      pkce_result = verify_pkce!(params[:code], params[:state])
+      exchange_code_for_tokens(params[:code], pkce_result[:verifier], pkce_result[:return_to])
     rescue PKCEError, GoogleOAuthError => e
-      redirect_to shakha.error_path(message: e.message)
+      redirect_to "/auth/shakha/error?message=#{URI.encode_www_form_component(e.message)}"
     end
 
     def token
@@ -56,16 +55,18 @@ module Shakha
     private
 
     def find_or_create_client
-      origin = URI.parse(request.origin).origin
+      origin = request.origin || Shakha.config.app_origin
+      origin_uri = URI.parse(origin).origin
 
-      Shakha::Client.find_or_create_by!(origin: origin) do |client|
-        client.name = URI.parse(request.origin).host
+      Shakha::Client.find_or_create_by!(origin: origin_uri) do |client|
+        client.name = URI.parse(origin).host
       end
     end
 
     def build_google_auth_url(pkce)
       client_id = Shakha.config.google_client_id || ENV["GOOGLE_CLIENT_ID"]
-      redirect_uri = "#{Shakha.config.service_base_url}/auth/shakha/callback"
+      base_url = Shakha.config.service_base_url || "http://localhost:3000"
+      redirect_uri = "#{base_url}/auth/shakha/callback"
 
       scopes = ["openid", "email", "profile"].join(" ")
       scopes += " https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile" if params[:request_pii]
@@ -87,10 +88,11 @@ module Shakha
       end.to_s
     end
 
-    def exchange_code_for_tokens(code, verifier)
+    def exchange_code_for_tokens(code, verifier, return_to = "/")
       client_id = Shakha.config.google_client_id || ENV["GOOGLE_CLIENT_ID"]
       client_secret = Shakha.config.google_client_secret || ENV["GOOGLE_CLIENT_SECRET"]
-      redirect_uri = "#{Shakha.config.service_base_url}/auth/shakha/callback"
+      base_url = Shakha.config.service_base_url || "http://localhost:3000"
+      redirect_uri = "#{base_url}/auth/shakha/callback"
 
       response = http_post(
         "https://oauth2.googleapis.com/token",
@@ -115,7 +117,7 @@ module Shakha
       pairwise_sub = Shakha.derive_pairwise_sub(google_sub)
 
       client = find_or_create_client
-      user = Shakha::User.find_or_initialize_by(pairwise_sub: pairwise_sub)
+      user = Shakha::User.find_or_initialize_by(pairwise_sub: pairwise_sub, client: client)
 
       if params[:request_pii] && payload["email"]
         user.assign_attributes(
@@ -139,8 +141,6 @@ module Shakha
         same_site: :lax,
         expires: Shakha.config.session_lifetime.from_now
       }
-
-      return_to = pkce_state&.dig(:return_to) || "/"
 
       redirect_to return_to
     end
