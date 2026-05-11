@@ -9,7 +9,7 @@ module Shakha
 
     layout -> { false if request.format == :json }
 
-    rescue_from ActiveSupport::ActionController::InvalidAuthenticityToken, with: :invalid_csrf_token
+    rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_csrf_token
 
     private
 
