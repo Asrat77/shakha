@@ -24,11 +24,12 @@ module Shakha
     end
 
     def bad_request(exception)
-      render json: { error: exception.message }, status: :bad_request
+      render json: { error: "Bad request" }, status: :bad_request
     end
 
     def bad_gateway(exception)
-      render json: { error: exception.message }, status: :bad_gateway
+      Rails.logger.error("[Shakha] Google OAuth error: #{exception.message}")
+      render json: { error: "Authentication service unavailable" }, status: :bad_gateway
     end
   end
 end

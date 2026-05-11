@@ -28,7 +28,8 @@ module Shakha
       pkce_result = verify_pkce!(params[:code], params[:state])
       exchange_code_for_tokens(params[:code], pkce_result[:verifier], pkce_result[:return_to])
     rescue PKCEError, GoogleOAuthError => e
-      redirect_to "/auth/shakha/error?message=#{URI.encode_www_form_component(e.message)}"
+      Rails.logger.warn("[Shakha] Auth error: #{e.class}: #{e.message}")
+      redirect_to "/auth/shakha/error?message=#{URI.encode_www_form_component(user_facing_error(e))}"
     end
 
     def token
@@ -75,6 +76,17 @@ module Shakha
       URI.parse(Shakha.config.service_base_url).host
     rescue URI::InvalidURIError
       nil
+    end
+
+    def user_facing_error(exception)
+      case exception
+      when PKCEError
+        "Authentication failed. Please try again."
+      when GoogleOAuthError
+        "Unable to sign in with Google. Please try again later."
+      else
+        "An unexpected error occurred. Please try again."
+      end
     end
 
     def find_or_create_client
