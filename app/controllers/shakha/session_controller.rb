@@ -61,6 +61,12 @@ module Shakha
 
       cookies.delete(:shakha_session_token) if session.token == current_session&.token
 
+      ActiveSupport::Notifications.instrument("shakha.session_revoked", {
+        session_id: session.id,
+        user_id: current_user.id,
+        ip: request.remote_ip
+      })
+
       render json: { status: "revoked" }
     end
   end

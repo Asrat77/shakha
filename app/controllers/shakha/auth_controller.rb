@@ -28,6 +28,10 @@ module Shakha
       pkce_result = verify_pkce!(params[:code], params[:state])
       exchange_code_for_tokens(params[:code], pkce_result[:verifier], pkce_result[:return_to])
     rescue PKCEError, GoogleOAuthError => e
+      ActiveSupport::Notifications.instrument("shakha.sign_in_failed", {
+        reason: e.class.name,
+        ip: request.remote_ip
+      })
       Rails.logger.warn("[Shakha] Auth error: #{e.class}: #{e.message}")
       redirect_to "/auth/shakha/error?message=#{URI.encode_www_form_component(user_facing_error(e))}"
     end
