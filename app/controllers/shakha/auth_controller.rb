@@ -114,9 +114,10 @@ module Shakha
 
       payload = decode_id_token(id_token)
       google_sub = payload["sub"]
-      pairwise_sub = Shakha.derive_pairwise_sub(google_sub)
 
       client = find_or_create_client
+      pairwise_sub = Shakha.derive_pairwise_sub(google_sub, client.client_id)
+
       user = Shakha::User.find_or_initialize_by(pairwise_sub: pairwise_sub, client: client)
 
       if params[:request_pii] && payload["email"]
