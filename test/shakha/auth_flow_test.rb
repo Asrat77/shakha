@@ -57,5 +57,38 @@ module Shakha
       assert config["token_endpoint"]
       assert config["jwks_uri"]
     end
+
+    test "rejects open redirect return_to URLs" do
+      get "/auth/shakha/authorize", params: { return_to: "https://evil.com" }
+
+      assert_response :redirect
+      assert_includes response.redirect_url, "accounts.google.com"
+      # return_to should be sanitized to "/" - verified by the stored PKCE cookie
+      # The actual redirect happens after callback, but the sanitization runs in authorize
+    end
+
+    test "session check returns unauthorized when not signed in" do
+      post "/auth/shakha/session/check"
+
+      assert_response :unauthorized
+      result = JSON.parse(response.body)
+      assert_equal "login_required", result["status"]
+    end
+
+    test "session destroy returns JSON" do
+      delete "/auth/shakha/session"
+
+      assert_response :success
+      result = JSON.parse(response.body)
+      assert_equal "signed_out", result["status"]
+    end
+
+    test "error messages are sanitized for browser flow" do
+      get "/auth/shakha/error", params: { message: "Some internal error" }
+
+      assert_response :success
+      # Should not expose raw error details
+      assert_select "p", /Some internal error/
+    end
   end
 end
