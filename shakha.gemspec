@@ -9,10 +9,14 @@ Gem::Specification.new do |spec|
   spec.authors = ["Asrat"]
   spec.email = ["asrat@example.com"]
 
-  spec.summary = "Minimal auth broker for Google OAuth with PKCE and pairwise subjects"
+  spec.summary = "Headless Google OAuth broker with PKCE, pairwise subjects, and zero JavaScript"
   spec.description = <<~DESC
-    Shakha handles Google OAuth + PKCE and gives your app a domain-scoped identity (pairwise_sub)
-    and a signed id_token. No client signup. No unnecessary scopes. Just identity.
+    Shakha is a headless authentication broker gem for Rails that handles Google OAuth 2.0
+    with PKCE security. It provides domain-scoped user identifiers via pairwise subjects,
+    ensuring the same Google account gets different IDs across different applications.
+
+    Built DHH-style: database sessions (no Redis), Turbo native (zero JS), and a single
+    "Continue with Google" button. Works as an embedded Rails engine or standalone service.
   DESC
   spec.homepage = "https://shakha.dev"
   spec.license = "MIT"
@@ -20,9 +24,10 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"] = spec.homepage
 
-  spec.files = Dir["lib/**/*", "app/**/*", "generators/**/*"]
+  spec.files = Dir["lib/**/*", "app/**/*"]
   spec.files += Dir["*.md", "LICENSE*"]
 
   spec.add_dependency "jwt", "~> 2.7"
-  spec.add_dependency "activesupport", ">= 7.1"
+  spec.add_dependency "activesupport", ">= 7.1", "< 10"
+  spec.add_dependency "railties", ">= 7.1", "< 10"
 end
