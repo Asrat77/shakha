@@ -6,6 +6,7 @@ require "uri"
 module Shakha
   class AuthController < ApplicationController
     include PKCEMixin
+    include Auditable
 
     skip_before_action :verify_authenticity_token, only: [:callback, :token]
 

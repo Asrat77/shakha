@@ -5,15 +5,15 @@ module Shakha
     extend ActiveSupport::Concern
 
     included do
-      after_action :log_sign_in, only: [:callback]
-      after_action :log_sign_out, only: [:destroy]
-      after_action :log_token_exchange, only: [:token]
+      after_action :log_sign_in
+      after_action :log_sign_out
+      after_action :log_token_exchange
     end
 
     private
 
     def log_sign_in
-      return unless response.successful? && @current_user
+      return unless action_name == "callback" && response.successful? && @current_user
 
       ActiveSupport::Notifications.instrument("shakha.sign_in", {
         user_id: @current_user&.id,

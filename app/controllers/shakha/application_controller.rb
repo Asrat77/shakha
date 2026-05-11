@@ -5,7 +5,6 @@ module Shakha
     include ErrorHandler
     include ControllerHelpers
     include RateLimiter
-    include Auditable
 
     protect_from_forgery with: :exception
 
