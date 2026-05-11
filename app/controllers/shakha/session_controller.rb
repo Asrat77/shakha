@@ -27,7 +27,11 @@ module Shakha
     def destroy
       current_session&.destroy
       cookies.delete(:shakha_session_token)
-      render json: { status: "signed_out" }
+
+      respond_to do |format|
+        format.html { redirect_to params[:return_to].presence || "/" }
+        format.json { render json: { status: "signed_out" } }
+      end
     end
   end
 end
