@@ -20,7 +20,7 @@ module Shakha
     end
 
     def check_rate_limit(key, max:, period:)
-      return unless Shakha.config.rate_limiting_enabled?
+      return unless Shakha.config.rate_limiting_enabled
 
       cache_key = "shakha-rate:#{key}:#{request.remote_ip}"
 
