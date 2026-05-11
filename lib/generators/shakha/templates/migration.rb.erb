@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+class CreateShakhaTables < ActiveRecord::Migration[7.1]
+  def change
+    create_table :shakha_clients do |t|
+      t.string :name, null: false
+      t.string :origin, null: false
+      t.string :client_id
+      t.json :metadata, default: {}
+
+      t.timestamps
+    end
+
+    add_index :shakha_clients, :origin, unique: true
+    add_index :shakha_clients, :client_id, unique: true
+
+    create_table :shakha_users do |t|
+      t.string :pairwise_sub, null: false
+      t.string :email
+      t.string :name
+      t.string :picture
+      t.references :client, null: false
+
+      t.timestamps
+    end
+
+    add_index :shakha_users, :pairwise_sub, unique: true
+    add_index :shakha_users, :email
+
+    create_table :shakha_sessions do |t|
+      t.string :token, null: false
+      t.string :jti, null: false
+      t.references :user, null: false
+      t.references :client, null: false
+      t.string :ip_address
+      t.string :user_agent
+
+      t.timestamps
+    end
+
+    add_index :shakha_sessions, :token, unique: true
+    add_index :shakha_sessions, :jti, unique: true
+    add_index :shakha_sessions, :created_at
+  end
+end

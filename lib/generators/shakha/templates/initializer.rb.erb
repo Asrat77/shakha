@@ -1,0 +1,29 @@
+# frozen_string_literal: true
+
+# Shakha Auth Configuration
+#
+# Set these environment variables:
+#   SHAKHA_SERVICE_SECRET - Secret key for pairwise subject derivation (HMAC-SHA256)
+#   GOOGLE_CLIENT_ID      - Google OAuth client ID
+#   GOOGLE_CLIENT_SECRET  - Google OAuth client secret
+#   SHAKHA_APP_ORIGIN     - Your application's origin (e.g., http://localhost:3000)
+#   SHAKHA_SERVICE_URL    - Optional: URL of standalone Shakha service (omit for embedded mode)
+#
+# For ES256 JWT signing, set either:
+#   SHAKHA_SIGNING_KEY     - EC P-256 private key in PEM or base64 format
+#   SHAKHA_KEY_ID         - Key ID for JWKS (optional, defaults to "default")
+
+Shakha.setup do |config|
+  config.app_origin = ENV.fetch("SHAKHA_APP_ORIGIN", "http://localhost:3000")
+  config.service_url = ENV["SHAKHA_SERVICE_URL"]
+  config.service_secret = ENV["SHAKHA_SERVICE_SECRET"]
+  config.google_client_id = ENV["GOOGLE_CLIENT_ID"]
+  config.google_client_secret = ENV["GOOGLE_CLIENT_SECRET"]
+  config.issuer = ENV.fetch("SHAKHA_ISSUER", "https://shakha.dev")
+  config.session_lifetime = 30.days
+
+  # JWT signing keys (required for service mode)
+  config.signing_key = ENV["SHAKHA_SIGNING_KEY"]
+  config.verification_key = ENV["SHAKHA_VERIFICATION_KEY"]
+  config.key_id = ENV["SHAKHA_KEY_ID"] || "default"
+end

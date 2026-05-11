@@ -1,0 +1,18 @@
+<% content_for :title, "Authentication Error" %>
+
+<div class="shakha-container">
+  <div class="shakha-card shakha-card-error">
+    <div class="shakha-error-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+
+    <h1>Authentication Failed</h1>
+    <p class="shakha-error-message"><%= params[:message] || "An error occurred" %></p>
+
+    <%= link_to "Try Again", "/auth/shakha", class: "shakha-button shakha-button-primary" %>
+  </div>
+</div>
