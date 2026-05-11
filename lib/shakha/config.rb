@@ -11,11 +11,13 @@ module Shakha
                   :session_lifetime,
                   :signing_key,
                   :verification_key,
-                  :key_id
+                  :key_id,
+                  :rate_limiting_enabled
 
     def initialize
       @session_lifetime = 30.days
       @issuer = "https://shakha.dev"
+      @rate_limiting_enabled = false
     end
 
     def embedded?

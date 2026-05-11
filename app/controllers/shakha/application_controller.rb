@@ -4,6 +4,7 @@ module Shakha
   class ApplicationController < ActionController::Base
     include ErrorHandler
     include ControllerHelpers
+    include RateLimiter
 
     protect_from_forgery with: :exception
 
