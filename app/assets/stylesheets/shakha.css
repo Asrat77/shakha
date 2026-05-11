@@ -1,193 +1,580 @@
-@layer shakha.base {
+/* Shakha Design System — Zero JS, CSS-only */
+
+@layer shakha.tokens {
   :root {
-    --shakha-bg: oklch(98% 0.002 250);
-    --shakha-surface: oklch(100% 0 0);
-    --shakha-border: oklch(87% 0.01 250);
-    --shakha-text: oklch(20% 0.03 250);
-    --shakha-text-muted: oklch(50% 0.02 250);
-    --shakha-primary: oklch(55% 0.2 250);
-    --shakha-primary-hover: oklch(50% 0.22 250);
-    --shakha-error: oklch(60% 0.2 25);
-    --shakha-radius: 8px;
-    --shakha-shadow: 0 1px 3px oklch(0% 0 0 / 0.05), 0 1px 2px oklch(0% 0 0 / 0.1);
+    /* Colors — OKLCH for perceptual uniformity */
+    --sh-bg: oklch(98% 0.002 250);
+    --sh-surface: oklch(100% 0 0);
+    --sh-surface-elevated: oklch(100% 0 0);
+    --sh-border: oklch(87% 0.01 250);
+    --sh-text: oklch(20% 0.03 250);
+    --sh-text-secondary: oklch(45% 0.02 250);
+    --sh-text-tertiary: oklch(60% 0.01 250);
+    --sh-primary: oklch(55% 0.18 250);
+    --sh-primary-hover: oklch(50% 0.2 250);
+    --sh-primary-subtle: oklch(95% 0.03 250);
+    --sh-error: oklch(55% 0.18 25);
+    --sh-error-subtle: oklch(95% 0.03 25);
+    --sh-success: oklch(55% 0.15 145);
+    --sh-success-subtle: oklch(95% 0.03 145);
+
+    /* Spacing — modular scale */
+    --sh-space-1: 0.25rem;
+    --sh-space-2: 0.5rem;
+    --sh-space-3: 0.75rem;
+    --sh-space-4: 1rem;
+    --sh-space-5: 1.25rem;
+    --sh-space-6: 1.5rem;
+    --sh-space-8: 2rem;
+    --sh-space-10: 2.5rem;
+    --sh-space-12: 3rem;
+    --sh-space-16: 4rem;
+
+    /* Typography */
+    --sh-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --sh-font-mono: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    --sh-text-xs: 0.75rem;
+    --sh-text-sm: 0.875rem;
+    --sh-text-base: 1rem;
+    --sh-text-lg: 1.125rem;
+    --sh-text-xl: 1.25rem;
+    --sh-text-2xl: 1.5rem;
+    --sh-text-3xl: 1.875rem;
+
+    /* Effects */
+    --sh-radius-sm: 6px;
+    --sh-radius-md: 10px;
+    --sh-radius-lg: 14px;
+    --sh-radius-xl: 20px;
+    --sh-shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.04);
+    --sh-shadow-md: 0 4px 12px oklch(0% 0 0 / 0.06), 0 1px 3px oklch(0% 0 0 / 0.04);
+    --sh-shadow-lg: 0 12px 40px oklch(0% 0 0 / 0.08), 0 4px 12px oklch(0% 0 0 / 0.04);
+    --sh-shadow-glow: 0 0 40px oklch(55% 0.18 250 / 0.15);
+
+    /* Transitions */
+    --sh-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --sh-transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --sh-transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  * {
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --sh-bg: oklch(18% 0.02 250);
+      --sh-surface: oklch(22% 0.025 250);
+      --sh-surface-elevated: oklch(26% 0.03 250);
+      --sh-border: oklch(35% 0.04 250);
+      --sh-text: oklch(95% 0.01 250);
+      --sh-text-secondary: oklch(75% 0.015 250);
+      --sh-text-tertiary: oklch(55% 0.02 250);
+      --sh-primary: oklch(65% 0.18 250);
+      --sh-primary-hover: oklch(70% 0.2 250);
+      --sh-primary-subtle: oklch(30% 0.06 250);
+      --sh-error: oklch(65% 0.18 25);
+      --sh-error-subtle: oklch(30% 0.05 25);
+      --sh-success: oklch(65% 0.15 145);
+      --sh-success-subtle: oklch(30% 0.04 145);
+      --sh-shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.2);
+      --sh-shadow-md: 0 4px 12px oklch(0% 0 0 / 0.3), 0 1px 3px oklch(0% 0 0 / 0.2);
+      --sh-shadow-lg: 0 12px 40px oklch(0% 0 0 / 0.4), 0 4px 12px oklch(0% 0 0 / 0.2);
+      --sh-shadow-glow: 0 0 60px oklch(65% 0.18 250 / 0.2);
+    }
+  }
+}
+
+@layer shakha.reset {
+  *, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
 
-  body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--shakha-bg);
-    color: var(--shakha-text);
-    line-height: 1.5;
+  html {
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--sh-font-sans);
+    font-size: var(--sh-text-base);
+    line-height: 1.6;
+    background: var(--sh-bg);
+    color: var(--sh-text);
+    min-height: 100vh;
   }
 
   a {
-    color: var(--shakha-primary);
+    color: var(--sh-primary);
     text-decoration: none;
+    transition: color var(--sh-transition-fast);
   }
 
   a:hover {
-    text-decoration: underline;
+    color: var(--sh-primary-hover);
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--sh-primary);
+    outline-offset: 2px;
+    border-radius: var(--sh-radius-sm);
+  }
+
+  img, svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--sh-primary);
+    outline-offset: 2px;
   }
 }
 
 @layer shakha.layout {
-  .shakha-container {
+  .sh-layout {
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-  }
-
-  .shakha-card {
-    width: 100%;
-    max-width: 400px;
-    background: var(--shakha-surface);
-    border: 1px solid var(--shakha-border);
-    border-radius: calc(var(--shakha-radius) + 4px);
-    box-shadow: var(--shakha-shadow);
+    display: grid;
+    place-items: center;
+    padding: var(--sh-space-6);
+    position: relative;
     overflow: hidden;
   }
 
-  .shakha-card-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    padding: 2rem;
+  .sh-layout::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, oklch(55% 0.15 250 / 0.08), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 60%, oklch(65% 0.12 280 / 0.06), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
   }
 
-  .shakha-card-error {
+  .sh-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    background: var(--sh-surface);
+    border: 1px solid var(--sh-border);
+    border-radius: var(--sh-radius-xl);
+    box-shadow: var(--sh-shadow-lg);
+    overflow: hidden;
+    transition: transform var(--sh-transition-base), box-shadow var(--sh-transition-base);
+  }
+
+  .sh-card:hover {
+    box-shadow: var(--sh-shadow-lg), var(--sh-shadow-glow);
+  }
+
+  .sh-card__header {
+    padding: var(--sh-space-8) var(--sh-space-8) var(--sh-space-4);
     text-align: center;
-    padding: 2rem;
   }
 
-  .shakha-header {
-    padding: 1.5rem 1.5rem 0;
+  .sh-card__body {
+    padding: var(--sh-space-4) var(--sh-space-8) var(--sh-space-8);
+  }
+
+  .sh-card__footer {
+    padding: var(--sh-space-4) var(--sh-space-8);
+    background: var(--sh-primary-subtle);
+    border-top: 1px solid var(--sh-border);
     text-align: center;
   }
 
-  .shakha-header h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--shakha-text);
-  }
-
-  .shakha-body {
-    padding: 1.5rem;
+  @media (prefers-color-scheme: dark) {
+    .sh-card__footer {
+      background: oklch(25% 0.04 250);
+    }
   }
 }
 
 @layer shakha.components {
-  .shakha-button {
+  /* Logo / Brand */
+  .sh-brand {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: var(--shakha-radius);
-    font-size: 0.9375rem;
-    font-weight: 500;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    gap: var(--sh-space-3);
+    margin-bottom: var(--sh-space-6);
   }
 
-  .shakha-button-google {
-    background: var(--shakha-surface);
-    border: 1px solid var(--shakha-border);
-    color: var(--shakha-text);
-  }
-
-  .shakha-button-google:hover {
-    background: var(--shakha-bg);
-    text-decoration: none;
-  }
-
-  .shakha-button-primary {
-    background: var(--shakha-primary);
-    border: 1px solid var(--shakha-primary);
+  .sh-brand__icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--sh-primary), oklch(65% 0.15 280));
+    border-radius: var(--sh-radius-md);
+    display: grid;
+    place-items: center;
     color: white;
+    font-weight: 700;
+    font-size: var(--sh-text-lg);
+    box-shadow: 0 4px 12px oklch(55% 0.18 250 / 0.3);
   }
 
-  .shakha-button-primary:hover {
-    background: var(--shakha-primary-hover);
-    text-decoration: none;
+  .sh-brand__name {
+    font-size: var(--sh-text-xl);
+    font-weight: 700;
+    color: var(--sh-text);
+    letter-spacing: -0.02em;
   }
 
-  .shakha-google-icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
+  .sh-brand__subtitle {
+    font-size: var(--sh-text-sm);
+    color: var(--sh-text-tertiary);
+    margin-top: var(--sh-space-1);
   }
 
-  .shakha-privacy {
-    margin-top: 1rem;
-    font-size: 0.75rem;
-    color: var(--shakha-text-muted);
+  /* Headings */
+  .sh-heading {
+    font-size: var(--sh-text-2xl);
+    font-weight: 700;
+    color: var(--sh-text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: var(--sh-space-2);
+  }
+
+  .sh-heading--center {
     text-align: center;
   }
 
-  .shakha-privacy a {
-    color: var(--shakha-text-muted);
+  .sh-subheading {
+    font-size: var(--sh-text-sm);
+    color: var(--sh-text-secondary);
+    text-align: center;
+    margin-bottom: var(--sh-space-6);
+  }
+
+  /* Buttons */
+  .sh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sh-space-3);
+    width: 100%;
+    padding: var(--sh-space-4) var(--sh-space-6);
+    border-radius: var(--sh-radius-md);
+    font-size: var(--sh-text-base);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--sh-transition-fast);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sh-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, oklch(100% 0 0 / 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform var(--sh-transition-slow);
+  }
+
+  .sh-btn:hover::after {
+    transform: translateX(100%);
+  }
+
+  .sh-btn--primary {
+    background: var(--sh-primary);
+    color: white;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 3px oklch(0% 0 0 / 0.1);
+  }
+
+  .sh-btn--primary:hover {
+    background: var(--sh-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px oklch(55% 0.18 250 / 0.25);
+    text-decoration: none;
+  }
+
+  .sh-btn--google {
+    background: var(--sh-surface);
+    color: var(--sh-text);
+    border: 1px solid var(--sh-border);
+  }
+
+  .sh-btn--google:hover {
+    background: var(--sh-surface-elevated);
+    border-color: var(--sh-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--sh-shadow-md);
+    text-decoration: none;
+  }
+
+  .sh-btn--danger {
+    background: var(--sh-error);
+    color: white;
+    border: 1px solid transparent;
+  }
+
+  .sh-btn--danger:hover {
+    background: oklch(50% 0.2 25);
+    transform: translateY(-1px);
+  }
+
+  .sh-btn--ghost {
+    background: transparent;
+    color: var(--sh-text-secondary);
+    border: 1px solid var(--sh-border);
+  }
+
+  .sh-btn--ghost:hover {
+    background: var(--sh-primary-subtle);
+    color: var(--sh-primary);
+  }
+
+  .sh-btn__icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* Error states */
+  .sh-error {
+    text-align: center;
+    padding: var(--sh-space-8);
+  }
+
+  .sh-error__icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--sh-space-6);
+    background: var(--sh-error-subtle);
+    border-radius: var(--sh-radius-lg);
+    display: grid;
+    place-items: center;
+    color: var(--sh-error);
+    animation: sh-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes sh-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+  }
+
+  .sh-error__title {
+    font-size: var(--sh-text-xl);
+    font-weight: 700;
+    color: var(--sh-text);
+    margin-bottom: var(--sh-space-2);
+  }
+
+  .sh-error__message {
+    font-size: var(--sh-text-base);
+    color: var(--sh-text-secondary);
+    margin-bottom: var(--sh-space-6);
+    line-height: 1.6;
+  }
+
+  /* Success states */
+  .sh-success {
+    text-align: center;
+    padding: var(--sh-space-8);
+  }
+
+  .sh-success__icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--sh-space-6);
+    background: var(--sh-success-subtle);
+    border-radius: var(--sh-radius-lg);
+    display: grid;
+    place-items: center;
+    color: var(--sh-success);
+  }
+
+  /* Session list */
+  .sh-sessions {
+    padding: var(--sh-space-6);
+  }
+
+  .sh-sessions__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--sh-space-6);
+    padding-bottom: var(--sh-space-4);
+    border-bottom: 1px solid var(--sh-border);
+  }
+
+  .sh-sessions__title {
+    font-size: var(--sh-text-lg);
+    font-weight: 700;
+    color: var(--sh-text);
+  }
+
+  .sh-sessions__count {
+    font-size: var(--sh-text-sm);
+    color: var(--sh-text-tertiary);
+    background: var(--sh-primary-subtle);
+    padding: var(--sh-space-1) var(--sh-space-3);
+    border-radius: var(--sh-radius-sm);
+  }
+
+  .sh-session {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sh-space-4) var(--sh-space-4);
+    border-radius: var(--sh-radius-md);
+    border: 1px solid var(--sh-border);
+    margin-bottom: var(--sh-space-3);
+    transition: all var(--sh-transition-fast);
+  }
+
+  .sh-session:hover {
+    background: var(--sh-primary-subtle);
+    border-color: var(--sh-primary);
+    transform: translateX(2px);
+  }
+
+  .sh-session--current {
+    border-color: var(--sh-primary);
+    background: var(--sh-primary-subtle);
+    box-shadow: 0 0 0 1px var(--sh-primary);
+  }
+
+  .sh-session__info {
+    flex: 1;
+  }
+
+  .sh-session__device {
+    font-weight: 600;
+    color: var(--sh-text);
+    font-size: var(--sh-text-sm);
+  }
+
+  .sh-session__meta {
+    font-size: var(--sh-text-xs);
+    color: var(--sh-text-tertiary);
+    margin-top: var(--sh-space-1);
+  }
+
+  .sh-session__badge {
+    font-size: var(--sh-text-xs);
+    font-weight: 600;
+    padding: var(--sh-space-1) var(--sh-space-2);
+    border-radius: var(--sh-radius-sm);
+    background: var(--sh-primary);
+    color: white;
+    margin-right: var(--sh-space-3);
+  }
+
+  .sh-session__actions {
+    display: flex;
+    gap: var(--sh-space-2);
+  }
+
+  .sh-session__btn {
+    padding: var(--sh-space-2) var(--sh-space-3);
+    border-radius: var(--sh-radius-sm);
+    font-size: var(--sh-text-xs);
+    font-weight: 600;
+    border: 1px solid var(--sh-border);
+    background: var(--sh-surface);
+    color: var(--sh-text-secondary);
+    transition: all var(--sh-transition-fast);
+  }
+
+  .sh-session__btn:hover {
+    background: var(--sh-error);
+    color: white;
+    border-color: var(--sh-error);
+  }
+
+  /* Empty state */
+  .sh-empty {
+    text-align: center;
+    padding: var(--sh-space-12);
+    color: var(--sh-text-tertiary);
+  }
+
+  .sh-empty__icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto var(--sh-space-4);
+    opacity: 0.5;
+  }
+
+  /* Links */
+  .sh-link {
+    color: var(--sh-primary);
+    font-size: var(--sh-text-sm);
+    font-weight: 500;
+    transition: all var(--sh-transition-fast);
+  }
+
+  .sh-link:hover {
     text-decoration: underline;
+  }
+
+  .sh-link--subtle {
+    color: var(--sh-text-tertiary);
+  }
+
+  .sh-link--subtle:hover {
+    color: var(--sh-text-secondary);
+  }
+
+  /* Divider */
+  .sh-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--sh-space-4);
+    margin: var(--sh-space-6) 0;
+    color: var(--sh-text-tertiary);
+    font-size: var(--sh-text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sh-divider::before,
+  .sh-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--sh-border);
+  }
+
+  /* Animations */
+  @keyframes sh-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes sh-slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .sh-animate-fade {
+    animation: sh-fade-in var(--sh-transition-slow) both;
+  }
+
+  .sh-animate-slide {
+    animation: sh-slide-up var(--sh-transition-slow) both;
+    animation-delay: 100ms;
   }
 }
 
-@layer shakha.states {
-  .shakha-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .shakha-loading p {
-    color: var(--shakha-text-muted);
-    font-size: 0.875rem;
-  }
-
-  .shakha-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--shakha-border);
-    border-top-color: var(--shakha-primary);
-    border-radius: 50%;
-    animation: shakha-spin 0.8s linear infinite;
-  }
-
-  @keyframes shakha-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .shakha-error-icon {
-    margin-bottom: 1rem;
-  }
-
-  .shakha-error-icon svg {
-    width: 48px;
-    height: 48px;
-    color: var(--shakha-error);
-  }
-
-  .shakha-card-error h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  .shakha-error-message {
-    color: var(--shakha-text-muted);
-    margin-bottom: 1.5rem;
-  }
+@layer shakha.utilities {
+  .sh-text-center { text-align: center; }
+  .sh-mt-2 { margin-top: var(--sh-space-2); }
+  .sh-mt-4 { margin-top: var(--sh-space-4); }
+  .sh-mt-6 { margin-top: var(--sh-space-6); }
+  .sh-mb-2 { margin-bottom: var(--sh-space-2); }
+  .sh-mb-4 { margin-bottom: var(--sh-space-4); }
+  .sh-mb-6 { margin-bottom: var(--sh-space-6); }
 }

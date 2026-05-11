@@ -21,6 +21,7 @@ module Shakha
 
       get "session" => "session#show"
       get "sessions" => "session#index"
+      get "sessions/view" => "session#list"
       post "session/check" => "session#check"
       delete "session" => "session#destroy"
       delete "sessions/:id" => "session#revoke"

@@ -1,18 +1,30 @@
 <% content_for :title, "Authentication Error" %>
 
-<div class="shakha-container">
-  <div class="shakha-card shakha-card-error">
-    <div class="shakha-error-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
+<div class="sh-layout sh-animate-fade">
+  <div class="sh-card sh-animate-slide">
+    <div class="sh-error">
+      <div class="sh-error__icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+
+      <h1 class="sh-error__title">Something went wrong</h1>
+      <p class="sh-error__message"><%= @message || "We couldn't sign you in. Please try again." %></p>
+
+      <%= link_to "/auth/shakha", class: "sh-btn sh-btn--primary" do %>
+        <svg class="sh-btn__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+        Try Again
+      <% end %>
+
+      <p class="sh-mt-4">
+        <a href="mailto:support@shakha.dev" class="sh-link sh-link--subtle">Contact Support</a>
+      </p>
     </div>
-
-    <h1>Authentication Failed</h1>
-    <p class="shakha-error-message"><%= params[:message] || "An error occurred" %></p>
-
-    <%= link_to "Try Again", "/auth/shakha", class: "shakha-button shakha-button-primary" %>
   </div>
 </div>

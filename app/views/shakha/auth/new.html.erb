@@ -1,16 +1,25 @@
-<% content_for :title, "Sign In" %>
+<% content_for :title, "Sign in — #{@client&.name || 'Shakha'}" %>
 
-<div class="shakha-container">
-  <div class="shakha-card">
-    <div class="shakha-header">
-      <h1>Sign in to <%= @client&.name || "your app" %></h1>
+<div class="sh-layout sh-animate-fade">
+  <div class="sh-card sh-animate-slide">
+    <div class="sh-card__header">
+      <div class="sh-brand">
+        <div class="sh-brand__icon">S</div>
+        <div>
+          <div class="sh-brand__name"><%= @client&.name || "Shakha" %></div>
+          <div class="sh-brand__subtitle">Secure authentication</div>
+        </div>
+      </div>
+
+      <h1 class="sh-heading sh-heading--center">Welcome back</h1>
+      <p class="sh-subheading">Sign in to continue to <%= @client&.name || "your app" %></p>
     </div>
 
-    <div class="shakha-body">
+    <div class="sh-card__body">
       <%= link_to shakha.authorize_path(request_pii: 1),
-                  class: "shakha-button shakha-button-google",
+                  class: "sh-btn sh-btn--google",
                   data: { turbo: false } do %>
-        <svg class="shakha-google-icon" viewBox="0 0 18 18" aria-hidden="true">
+        <svg class="sh-btn__icon" viewBox="0 0 18 18" aria-hidden="true">
           <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
           <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
           <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
@@ -19,11 +28,19 @@
         Continue with Google
       <% end %>
 
-      <p class="shakha-privacy">
+      <div class="sh-divider">or</div>
+
+      <p class="sh-text-center" style="color: var(--sh-text-tertiary); font-size: var(--sh-text-sm);">
         By signing in, you agree to our
-        <%= link_to "Terms of Service", "#" %> and
-        <%= link_to "Privacy Policy", "#" %>.
+        <a href="#">Terms</a> and
+        <a href="#">Privacy Policy</a>.
       </p>
+    </div>
+
+    <div class="sh-card__footer">
+      <span style="color: var(--sh-text-tertiary); font-size: var(--sh-text-sm);">
+        Secured by <strong style="color: var(--sh-text-secondary);">Shakha</strong>
+      </span>
     </div>
   </div>
 </div>

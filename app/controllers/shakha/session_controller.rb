@@ -54,6 +54,13 @@ module Shakha
       end
     end
 
+    def list
+      return redirect_to "/auth/shakha" unless signed_in?
+
+      @sessions = current_user.sessions.active.order(created_at: :desc)
+      @current_token = current_session&.token
+    end
+
     def revoke
       return render json: { error: "Authentication required" }, status: :unauthorized unless signed_in?
 

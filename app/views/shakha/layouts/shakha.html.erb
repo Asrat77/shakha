@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title><%= yield :title %></title>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= yield(:title).presence || "Shakha" %></title>
   <%= stylesheet_link_tag "shakha", "data-turbo-track": "reload" %>
   <%= csrf_meta_tags %>
+  <meta name="theme-color" content="#0f0f23" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 </head>
 <body>
   <%= yield %>
