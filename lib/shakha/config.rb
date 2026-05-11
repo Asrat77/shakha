@@ -8,7 +8,10 @@ module Shakha
                   :google_client_id,
                   :google_client_secret,
                   :issuer,
-                  :session_lifetime
+                  :session_lifetime,
+                  :signing_key,
+                  :verification_key,
+                  :key_id
 
     def initialize
       @session_lifetime = 30.days

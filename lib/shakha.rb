@@ -2,6 +2,12 @@
 
 require "shakha/version"
 require "shakha/config"
+require "shakha/pairwise"
+require "shakha/jwt_handler"
+require "shakha/pkce"
+require "shakha/error_handler"
+require "shakha/controller_helpers"
+require "shakha/middleware"
 require "shakha/engine"
 
 module Shakha
