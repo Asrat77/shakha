@@ -8,9 +8,8 @@ module Shakha
 
     included do
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
-      rescue_from Shakha::JWTError, with: :unauthorized
       rescue_from Shakha::PKCEError, with: :bad_request
-      rescue_from Shakha::GoogleOAuthError, with: :bad_gateway
+      rescue_from Shakha::OAuthError, with: :bad_gateway
     end
 
     private

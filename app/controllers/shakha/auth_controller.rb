@@ -6,53 +6,57 @@ require "uri"
 module Shakha
   class AuthController < ApplicationController
     include PKCEMixin
-    include Auditable
 
-    skip_before_action :verify_authenticity_token, only: [:callback, :token]
+    skip_before_action :verify_authenticity_token, only: [:callback]
 
     def new
       @client = find_or_create_client
       @return_to = sanitize_return_to(params[:return_to])
+      @providers = Shakha.config.providers
     end
 
     def authorize
-      params[:return_to] = sanitize_return_to(params[:return_to])
+      provider = resolve_provider
       pkce = create_pkce_bundle
-      @client = find_or_create_client
 
-      google_auth_url = build_google_auth_url(pkce)
+      redirect_uri = "#{Shakha.config.app_origin}/auth/shakha/#{provider.provider_name}/callback"
+      auth_url = provider.authorize_url(
+        state: pkce[:state],
+        code_challenge: pkce[:challenge],
+        redirect_uri: redirect_uri
+      )
 
-      redirect_to google_auth_url, allow_other_host: true
+      redirect_to auth_url, allow_other_host: true
     end
 
     def callback
+      provider = resolve_provider
       pkce_result = verify_pkce!(params[:state])
-      exchange_code_for_tokens(params[:code], pkce_result[:verifier], pkce_result[:return_to], pkce_result[:nonce])
-    rescue PKCEError, GoogleOAuthError => e
-      ActiveSupport::Notifications.instrument("shakha.sign_in_failed", {
-        reason: e.class.name,
-        ip: request.remote_ip
-      })
-      Rails.logger.warn("[Shakha] Auth error: #{e.class}: #{e.message}")
-      redirect_to "/auth/shakha/error?message=#{URI.encode_www_form_component(user_facing_error(e))}"
+
+      token_response = provider.exchange_code(
+        code: params[:code],
+        code_verifier: pkce_result[:verifier],
+        redirect_uri: "#{Shakha.config.app_origin}/auth/shakha/#{provider.provider_name}/callback"
+      )
+
+      identity = provider.identity_from_response(token_response)
+      user = find_or_create_user(provider.provider_name, identity)
+      session_record = create_session(user)
+      set_session_cookie(session_record)
+      redirect_to build_return_url(pkce_result[:return_to], session_record)
+
+    rescue PKCEError, OAuthError => e
+      handle_auth_failure(e, pkce_result)
     end
 
-    def token
-      code = params[:code]
-      verifier = params[:code_verifier]
+    def destroy
+      current_session&.destroy
+      cookies.delete(:shakha_session_token)
 
-      raise PKCEError, "Missing code" unless code
-      raise PKCEError, "Missing code_verifier" unless verifier
-
-      id_token = exchange_code_for_id_token(code, verifier)
-
-      render json: {
-        id_token: id_token,
-        pairwise_sub: id_token_payload(id_token)[:sub],
-        expires_in: 24.hours.to_i
-      }
-    rescue PKCEError, JWTError, GoogleOAuthError => e
-      render json: { error: e.message }, status: :unauthorized
+      respond_to do |format|
+        format.html { redirect_to params[:return_to].presence || "/" }
+        format.json { render json: { status: "signed_out" } }
+      end
     end
 
     def error
@@ -61,16 +65,73 @@ module Shakha
 
     private
 
+    def resolve_provider
+      provider_name = (params[:provider] || :google).to_sym
+      Shakha::Providers.resolve(provider_name)
+    end
+
+    def find_or_create_user(provider_name, identity)
+      Shakha::User.find_or_create_by!(
+        provider: provider_name.to_s,
+        uid: identity[:uid]
+      ) do |user|
+        user.client = find_or_create_client
+        user.email = identity[:email]
+        user.name = identity[:name]
+        user.picture = identity[:picture]
+      end
+    end
+
+    def create_session(user)
+      Shakha::Session.create!(
+        user: user,
+        client: find_or_create_client,
+        ip_address: request.remote_ip,
+        user_agent: request.user_agent
+      )
+    end
+
+    def set_session_cookie(session_record)
+      cookies.encrypted[:shakha_session_token] = {
+        value: session_record.token,
+        httponly: true,
+        secure: Rails.env.production?,
+        same_site: :lax,
+        expires: Shakha.config.session_lifetime.from_now
+      }
+    end
+
+    def build_return_url(return_to, session_record)
+      uri = URI.parse(return_to || "/")
+      existing = URI.decode_www_form(uri.query || "").to_h
+      existing["token"] = session_record.token
+      existing["expires_at"] = session_record.expires_at.iso8601
+      uri.query = URI.encode_www_form(existing)
+      uri.to_s
+    end
+
+    def handle_auth_failure(exception, pkce_result)
+      return_to = pkce_result&.dig(:return_to) || "/"
+
+      if request.format.json? || api_request?
+        render json: { error: user_facing_error(exception) }, status: :unauthorized
+      else
+        redirect_to "#{return_to}?error=#{URI.encode_www_form_component(user_facing_error(exception))}"
+      end
+    end
+
+    def api_request?
+      request.headers["Accept"]&.include?("application/json")
+    end
+
     def sanitize_return_to(raw)
       return "/" if raw.blank?
 
       uri = URI.parse(raw)
       app_host = URI.parse(Shakha.config.app_origin).host
 
-      # Must have a path
       return "/" unless uri.path.present? && uri.path.start_with?("/")
 
-      # If external host, must be in allowed origins
       if uri.host.present? && uri.host != app_host && !allowed_origin?(uri.origin)
         return "/"
       end
@@ -84,183 +145,20 @@ module Shakha
       Shakha.config.allowed_redirect_origins&.include?(origin) || false
     end
 
-    def app_origin_host
-      URI.parse(Shakha.config.app_origin).host
-    end
-
-    def client_origin_host
-      URI.parse(Shakha.config.service_base_url).host
-    rescue URI::InvalidURIError
-      nil
+    def find_or_create_client
+      origin = request.origin || Shakha.config.app_origin
+      origin_uri = URI.parse(origin).origin
+      Shakha::Client.find_or_create_by!(origin: origin_uri) do |client|
+        client.name = URI.parse(origin).host
+      end
     end
 
     def user_facing_error(exception)
       case exception
-      when PKCEError
-        "Authentication failed. Please try again."
-      when GoogleOAuthError
-        "Unable to sign in with Google. Please try again later."
-      else
-        "An unexpected error occurred. Please try again."
+      when PKCEError then "Authentication failed. Please try again."
+      when OAuthError then "Unable to sign in. Please try again later."
+      else "An unexpected error occurred. Please try again."
       end
-    end
-
-    def find_or_create_client
-      origin = request.origin || Shakha.config.app_origin
-      origin_uri = URI.parse(origin).origin
-
-      if Shakha.config.embedded?
-        Shakha::Client.find_or_create_by!(origin: origin_uri) do |client|
-          client.name = URI.parse(origin).host
-        end
-      else
-        Shakha::Client.find_by!(origin: origin_uri)
-      end
-    rescue ActiveRecord::RecordNotFound
-      raise ConfigurationError, "Unknown client origin: #{origin_uri}. Register this origin in shakha_clients first."
-    end
-
-    def build_google_auth_url(pkce)
-      client_id = Shakha.config.google_client_id || ENV["GOOGLE_CLIENT_ID"]
-      base_url = Shakha.config.service_base_url || "http://localhost:3000"
-      redirect_uri = "#{base_url}/auth/shakha/callback"
-
-      scopes = ["openid", "email", "profile"].join(" ")
-      scopes += " https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile" if params[:request_pii]
-
-      params = {
-        client_id: client_id,
-        redirect_uri: redirect_uri,
-        response_type: "code",
-        scope: scopes,
-        code_challenge: pkce[:challenge],
-        code_challenge_method: "S256",
-        state: pkce[:state],
-        nonce: pkce[:nonce],
-        access_type: "offline",
-        prompt: "consent"
-      }
-
-      URI.parse("https://accounts.google.com/o/oauth2/v2/auth").tap do |uri|
-        uri.query = URI.encode_www_form(params)
-      end.to_s
-    end
-
-    def exchange_code_for_tokens(code, verifier, return_to = "/", expected_nonce = nil)
-      client_id = Shakha.config.google_client_id || ENV["GOOGLE_CLIENT_ID"]
-      client_secret = Shakha.config.google_client_secret || ENV["GOOGLE_CLIENT_SECRET"]
-      base_url = Shakha.config.service_base_url || "http://localhost:3000"
-      redirect_uri = "#{base_url}/auth/shakha/callback"
-
-      response = http_post(
-        "https://oauth2.googleapis.com/token",
-        {
-          code: code,
-          client_id: client_id,
-          client_secret: client_secret,
-          redirect_uri: redirect_uri,
-          grant_type: "authorization_code",
-          code_verifier: verifier
-        }
-      )
-
-      tokens = JSON.parse(response.body)
-      id_token = tokens["id_token"]
-      access_token = tokens["access_token"]
-
-      raise GoogleOAuthError, "No id_token received" unless id_token
-
-      payload = decode_id_token(id_token)
-      google_sub = payload["sub"]
-
-      # Verify nonce (OIDC replay protection)
-      if expected_nonce && payload["nonce"] != expected_nonce
-        raise GoogleOAuthError, "Nonce mismatch"
-      end
-
-      client = find_or_create_client
-      pairwise_sub = Shakha.derive_pairwise_sub(google_sub, client.client_id)
-
-      user = Shakha::User.find_or_initialize_by(pairwise_sub: pairwise_sub, client: client)
-
-      if payload["email"]
-        user.assign_attributes(
-          email: payload["email"],
-          name: payload["name"],
-          picture: payload["picture"]
-        )
-      end
-      user.save!
-
-      session_record = Shakha::Session.create!(
-        user: user,
-        client: client,
-        ip_address: request.remote_ip,
-        user_agent: request.user_agent
-      )
-
-      cookies.encrypted[:shakha_session_token] = {
-        value: session_record.token,
-        httponly: true,
-        secure: Rails.env.production?,
-        same_site: :lax,
-        expires: Shakha.config.session_lifetime.from_now
-      }
-
-      redirect_to sanitize_return_to(return_to)
-    end
-
-    def exchange_code_for_id_token(code, verifier)
-      client_id = Shakha.config.google_client_id || ENV["GOOGLE_CLIENT_ID"]
-      client_secret = Shakha.config.google_client_secret || ENV["GOOGLE_CLIENT_SECRET"]
-      redirect_uri = "#{Shakha.config.service_base_url}/auth/shakha/callback"
-
-      response = http_post(
-        "https://oauth2.googleapis.com/token",
-        {
-          code: code,
-          client_id: client_id,
-          client_secret: client_secret,
-          redirect_uri: redirect_uri,
-          grant_type: "authorization_code",
-          code_verifier: verifier
-        }
-      )
-
-      tokens = JSON.parse(response.body)
-      tokens["id_token"] || raise(GoogleOAuthError, "No id_token in response")
-    end
-
-    def id_token_payload(id_token)
-      JWT.decode(id_token, nil, false)[0]
-    end
-
-    def decode_id_token(id_token)
-      JWT.decode(id_token, nil, false)[0]
-    end
-
-    def http_post(url, body)
-      uri = URI.parse(url)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = uri.scheme == "https"
-      http.open_timeout = 5
-      http.read_timeout = 10
-
-      request = Net::HTTP::Post.new(uri.request_uri)
-      request["Content-Type"] = "application/x-www-form-urlencoded"
-      request.body = URI.encode_www_form(body)
-
-      response = http.request(request)
-
-      unless response.is_a?(Net::HTTPSuccess)
-        Rails.logger.error("[Shakha] Google API error: HTTP #{response.code} — #{response.body.truncate(500)}")
-        raise GoogleOAuthError, "Google returned HTTP #{response.code}"
-      end
-
-      response
-    rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, SocketError => e
-      Rails.logger.error("[Shakha] Network error contacting Google: #{e.message}")
-      raise GoogleOAuthError, "Unable to reach Google authentication service"
     end
   end
 end

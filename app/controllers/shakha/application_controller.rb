@@ -14,7 +14,7 @@ module Shakha
 
     private
 
-    def invalid_csrf_token(exception)
+    def invalid_csrf_token(_exception)
       render json: { error: "Invalid CSRF token" }, status: :unprocessable_entity
     end
   end

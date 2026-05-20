@@ -4,30 +4,20 @@ module Shakha
   class Engine < ::Rails::Engine
     isolate_namespace Shakha
 
-    config.app_middleware.use Shakha::Middleware
-
     config.after_initialize do
       Shakha::ConfigValidator.validate!(Shakha.config)
     end
 
-    # Engine routes - these should be relative paths
     routes do
       root to: "auth#new"
 
-      get "authorize" => "auth#authorize"
-      get "callback" => "auth#callback"
-      post "token" => "auth#token"
-      get "error" => "auth#error"
+      get  ":provider/authorize" => "auth#authorize"
+      get  ":provider/callback"  => "auth#callback"
+      delete "sign_out"           => "auth#destroy"
+      get  "error"                => "auth#error"
 
-      get "session" => "session#show"
-      get "sessions" => "session#index"
-      get "sessions/view" => "session#list"
-      post "session/check" => "session#check"
-      delete "session" => "session#destroy"
-      delete "sessions/:id" => "session#revoke"
-
-      get ".well-known/jwks.json" => "jwks#show"
-      get ".well-known/openid-configuration" => "openid#configuration"
+      get  "session"        => "session#show"
+      get  "session/check"  => "session#check"
     end
   end
 end
