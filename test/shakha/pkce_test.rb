@@ -4,11 +4,18 @@ require_relative "../test_helper"
 
 module Shakha
   class PKCETest < ActiveSupport::TestCase
-    test "generates valid code verifier" do
+    test "generates RFC 7636 compliant code verifier" do
       verifier = PKCEMixin.generate_code_verifier
 
-      assert_equal 64, verifier.length
-      assert verifier.match?(/^[A-Za-z0-9_-]+$/)
+      assert verifier.length.between?(43, 128)
+      assert_match(/\A[A-Za-z0-9\-._~]+\z/, verifier)
+    end
+
+    test "code verifier contains no disallowed characters" do
+      100.times do
+        verifier = PKCEMixin.generate_code_verifier
+        refute_match(/[+\/]/, verifier)
+      end
     end
 
     test "generates consistent code challenge" do
@@ -19,12 +26,12 @@ module Shakha
       assert_equal challenge, recomputed
     end
 
-    test "challenge is base64url encoded" do
+    test "challenge is valid base64url without padding" do
       verifier = "a" * 64
       challenge = PKCEMixin.generate_code_challenge(verifier)
 
-      decoded = Base64.urlsafe_decode64(challenge)
-      assert_equal 32, decoded.length
+      assert_match(/\A[A-Za-z0-9\-_]+\z/, challenge)
+      refute challenge.end_with?("=")
     end
   end
 end

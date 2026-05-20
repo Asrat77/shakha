@@ -4,47 +4,37 @@ require_relative "../test_helper"
 
 module Shakha
   class UserTest < ActiveSupport::TestCase
-    fixtures :shakha_users, :shakha_clients
-
     setup do
-      @client = shakha_clients(:one)
+      @client = Shakha::Client.create!(origin: "https://test.com", name: "Test")
     end
 
-    test "validates presence of pairwise_sub" do
-      user = Shakha::User.new(client: @client)
+    test "validates presence of provider" do
+      user = Shakha::User.new(uid: "123", client: @client)
       refute user.valid?
-      assert_includes user.errors[:pairwise_sub], "can't be blank"
+      assert_includes user.errors[:provider], "can't be blank"
     end
 
-    test "validates uniqueness of pairwise_sub" do
-      existing = shakha_users(:one)
-      user = Shakha::User.new(pairwise_sub: existing.pairwise_sub, client: @client)
-
+    test "validates presence of uid" do
+      user = Shakha::User.new(provider: "google", client: @client)
       refute user.valid?
-      assert_includes user.errors[:pairwise_sub], "has already been taken"
+      assert_includes user.errors[:uid], "can't be blank"
     end
 
-    test "validates uniqueness of email when present" do
-      existing = shakha_users(:one)
-      existing.update!(email: "test@example.com")
-
-      user = Shakha::User.new(
-        pairwise_sub: "ps_unique123",
-        email: "test@example.com",
-        client: @client
-      )
-
+    test "validates uniqueness of uid scoped to provider" do
+      Shakha::User.create!(provider: "google", uid: "123", client: @client)
+      user = Shakha::User.new(provider: "google", uid: "123", client: @client)
       refute user.valid?
-      assert_includes user.errors[:email], "has already been taken"
+      assert_includes user.errors[:uid], "has already been taken"
+    end
+
+    test "allows same uid with different provider" do
+      Shakha::User.create!(provider: "google", uid: "123", client: @client)
+      user = Shakha::User.new(provider: "github", uid: "123", client: @client)
+      assert user.valid?
     end
 
     test "allows blank email" do
-      user = Shakha::User.new(
-        pairwise_sub: "ps_test123",
-        email: nil,
-        client: @client
-      )
-
+      user = Shakha::User.new(provider: "google", uid: "test123", client: @client)
       assert user.valid?
     end
   end

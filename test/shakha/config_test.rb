@@ -7,33 +7,16 @@ module Shakha
     test "sets defaults" do
       config = Config.new
 
-      assert_equal "https://shakha.dev", config.issuer
       assert_equal 30.days, config.session_lifetime
+      assert_equal [:google], config.providers
+      assert_equal false, config.rate_limiting_enabled
     end
 
-    test "calculates client_id from origin" do
+    test "accepts custom providers" do
       config = Config.new
-      config.app_origin = "https://myapp.com"
+      config.providers = [:google, :github]
 
-      assert_equal "origin:https://myapp.com", config.client_id
-    end
-
-    test "returns origin for embedded mode" do
-      config = Config.new
-      config.app_origin = "https://myapp.com"
-
-      assert_nil config.service_url
-      assert config.embedded?
-      assert_equal "https://myapp.com", config.service_base_url
-    end
-
-    test "returns service_url when set" do
-      config = Config.new
-      config.app_origin = "https://myapp.com"
-      config.service_url = "https://auth.shakha.dev/"
-
-      refute config.embedded?
-      assert_equal "https://auth.shakha.dev", config.service_base_url
+      assert_equal [:google, :github], config.providers
     end
   end
 end

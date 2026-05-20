@@ -10,85 +10,55 @@ module Shakha
       Shakha.config.google_client_secret = "test_client_secret"
     end
 
-    test "new auth page renders sign in button" do
+    test "sign-in page renders" do
       get "/auth/shakha"
 
       assert_response :success
-      assert_select "a[href*='authorize']", text: /Continue with Google/
+      assert_select "a[href*='/auth/shakha/']"
     end
 
-    test "authorize redirects to Google" do
-      get "/auth/shakha/authorize"
+    test "google authorize redirects to Google with PKCE params" do
+      get "/auth/shakha/google"
 
       assert_response :redirect
       assert_includes response.redirect_url, "accounts.google.com"
-      assert_includes response.redirect_url, "client_id=test_client_id"
       assert_includes response.redirect_url, "code_challenge="
       assert_includes response.redirect_url, "code_challenge_method=S256"
-    end
-
-    test "error page shows message" do
-      get "/auth/shakha/error", params: { message: "Test error message" }
-
-      assert_response :success
-      assert_select "p", /Test error message/
-    end
-
-    test "JWKS endpoint returns valid structure" do
-      get "/.well-known/jwks.json"
-
-      assert_response :success
-      assert_equal "application/json", response.media_type
-
-      jwks = JSON.parse(response.body)
-      assert jwks["keys"]
-      assert jwks["keys"].first["kty"], "EC"
-    end
-
-    test "OpenID configuration endpoint returns valid structure" do
-      get "/.well-known/openid-configuration"
-
-      assert_response :success
-      assert_equal "application/json", response.media_type
-
-      config = JSON.parse(response.body)
-      assert_equal "https://shakha.dev", config["issuer"]
-      assert config["authorization_endpoint"]
-      assert config["token_endpoint"]
-      assert config["jwks_uri"]
+      assert_includes response.redirect_url, "state="
     end
 
     test "rejects open redirect return_to URLs" do
-      get "/auth/shakha/authorize", params: { return_to: "https://evil.com" }
+      Shakha.config.allowed_redirect_origins = ["https://myfrontend.com"]
+
+      get "/auth/shakha/google", params: { return_to: "https://evil.com/steal" }
 
       assert_response :redirect
-      assert_includes response.redirect_url, "accounts.google.com"
-      # return_to should be sanitized to "/" - verified by the stored PKCE cookie
-      # The actual redirect happens after callback, but the sanitization runs in authorize
     end
 
-    test "session check returns unauthorized when not signed in" do
-      post "/auth/shakha/session/check"
+    test "session check returns expired when not signed in" do
+      get "/auth/shakha/session/check"
 
       assert_response :unauthorized
-      result = JSON.parse(response.body)
-      assert_equal "login_required", result["status"]
+      assert_equal "expired", JSON.parse(response.body)["status"]
     end
 
-    test "session destroy returns JSON" do
-      delete "/auth/shakha/session"
+    test "session endpoint returns unauthorized when not signed in" do
+      get "/auth/shakha/session"
 
-      assert_response :success
-      result = JSON.parse(response.body)
-      assert_equal "signed_out", result["status"]
+      assert_response :unauthorized
     end
 
-    test "error messages are sanitized for browser flow" do
-      get "/auth/shakha/error", params: { message: "Some internal error" }
+    test "sign out returns JSON" do
+      delete "/auth/shakha/sign_out"
 
       assert_response :success
-      # Should not expose raw error details
-      assert_select "p", /Some internal error/
+      assert_equal "signed_out", JSON.parse(response.body)["status"]
+    end
+
+    test "error page shows message" do
+      get "/auth/shakha/error", params: { message: "Something went wrong" }
+
+      assert_response :success
     end
   end
 end

@@ -1,5 +1,6 @@
 one:
-  pairwise_sub: ps_testuser123
+  provider: google
+  uid: google_123
   email: test@example.com
   name: Test User
   picture: https://example.com/avatar.png
