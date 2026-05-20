@@ -28,12 +28,13 @@ class CreateShakhaTables < ActiveRecord::Migration[7.1]
 
     create_table :shakha_users do |t|
       t.references :client, null: false, foreign_key: { to_table: :shakha_clients }
-      t.string :pairwise_sub, null: false
+      t.string :provider, null: false
+      t.string :uid, null: false
       t.string :email
       t.string :name
       t.string :picture
       t.timestamps
-      t.index :pairwise_sub, unique: true
+      t.index [:provider, :uid], unique: true
       t.index :email
     end
 
@@ -41,12 +42,10 @@ class CreateShakhaTables < ActiveRecord::Migration[7.1]
       t.references :user, foreign_key: { to_table: :shakha_users }
       t.references :client, null: false, foreign_key: { to_table: :shakha_clients }
       t.string :token, null: false
-      t.string :jti, null: false
       t.string :ip_address
       t.string :user_agent
       t.timestamps
       t.index :token, unique: true
-      t.index :jti, unique: true
       t.index :created_at
     end
   end
