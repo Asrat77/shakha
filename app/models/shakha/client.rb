@@ -9,10 +9,6 @@ module Shakha
 
     validates :origin, presence: true, uniqueness: true
 
-    def client_id
-      "origin:#{origin}"
-    end
-
     def self.find_by_origin!(origin)
       find_by!(origin: URI.parse(origin).origin)
     end

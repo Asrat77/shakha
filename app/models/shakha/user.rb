@@ -7,11 +7,9 @@ module Shakha
     belongs_to :client, class_name: "Shakha::Client"
     has_many :sessions, class_name: "Shakha::Session", dependent: :destroy
 
-    validates :pairwise_sub, presence: true
+    validates :provider, presence: true
+    validates :uid, presence: true
+    validates :uid, uniqueness: { scope: :provider }
     validates :email, uniqueness: { scope: :client_id }, allow_blank: true
-
-    def can_access?(resource)
-      true
-    end
   end
 end
