@@ -1,0 +1,27 @@
+# frozen_string_literal: true
+
+Shakha.setup do |config|
+  # Your Rails app's origin
+  config.app_origin = ENV.fetch("APP_ORIGIN", "http://localhost:3000")
+
+  # Allowed frontend origins for SPA token redirect
+  config.allowed_redirect_origins = ENV.fetch("ALLOWED_REDIRECT_ORIGINS", "").split(",")
+
+  # Google OAuth (required)
+  config.google_client_id     = ENV["GOOGLE_CLIENT_ID"]
+  config.google_client_secret = ENV["GOOGLE_CLIENT_SECRET"]
+
+  # GitHub OAuth (optional — remove from providers if unused)
+  config.github_client_id     = ENV["GITHUB_CLIENT_ID"]
+  config.github_client_secret = ENV["GITHUB_CLIENT_SECRET"]
+
+  # Enabled providers
+  # config.providers = [:google]                # Google only
+  config.providers = [:google, :github]          # Both
+
+  # Session lifetime (default: 30 days)
+  # config.session_lifetime = 30.days
+
+  # Rate limiting (default: false)
+  # config.rate_limiting_enabled = true
+end
