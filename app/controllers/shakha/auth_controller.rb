@@ -26,8 +26,8 @@ module Shakha
     end
 
     def callback
-      pkce_result = verify_pkce!(params[:code], params[:state])
-      exchange_code_for_tokens(params[:code], pkce_result[:verifier], pkce_result[:return_to])
+      pkce_result = verify_pkce!(params[:state])
+      exchange_code_for_tokens(params[:code], pkce_result[:verifier], pkce_result[:return_to], pkce_result[:nonce])
     rescue PKCEError, GoogleOAuthError => e
       ActiveSupport::Notifications.instrument("shakha.sign_in_failed", {
         reason: e.class.name,
@@ -65,12 +65,23 @@ module Shakha
       return "/" if raw.blank?
 
       uri = URI.parse(raw)
-      return "/" if uri.host.present? && ![app_origin_host, client_origin_host].include?(uri.host)
+      app_host = URI.parse(Shakha.config.app_origin).host
+
+      # Must have a path
       return "/" unless uri.path.present? && uri.path.start_with?("/")
 
-      uri.path
+      # If external host, must be in allowed origins
+      if uri.host.present? && uri.host != app_host && !allowed_origin?(uri.origin)
+        return "/"
+      end
+
+      raw
     rescue URI::InvalidURIError
       "/"
+    end
+
+    def allowed_origin?(origin)
+      Shakha.config.allowed_redirect_origins&.include?(origin) || false
     end
 
     def app_origin_host
@@ -125,6 +136,7 @@ module Shakha
         code_challenge: pkce[:challenge],
         code_challenge_method: "S256",
         state: pkce[:state],
+        nonce: pkce[:nonce],
         access_type: "offline",
         prompt: "consent"
       }
@@ -134,7 +146,7 @@ module Shakha
       end.to_s
     end
 
-    def exchange_code_for_tokens(code, verifier, return_to = "/")
+    def exchange_code_for_tokens(code, verifier, return_to = "/", expected_nonce = nil)
       client_id = Shakha.config.google_client_id || ENV["GOOGLE_CLIENT_ID"]
       client_secret = Shakha.config.google_client_secret || ENV["GOOGLE_CLIENT_SECRET"]
       base_url = Shakha.config.service_base_url || "http://localhost:3000"
@@ -161,6 +173,11 @@ module Shakha
       payload = decode_id_token(id_token)
       google_sub = payload["sub"]
 
+      # Verify nonce (OIDC replay protection)
+      if expected_nonce && payload["nonce"] != expected_nonce
+        raise GoogleOAuthError, "Nonce mismatch"
+      end
+
       client = find_or_create_client
       pairwise_sub = Shakha.derive_pairwise_sub(google_sub, client.client_id)
 
@@ -178,7 +195,6 @@ module Shakha
       session_record = Shakha::Session.create!(
         user: user,
         client: client,
-        jti: SecureRandom.uuid,
         ip_address: request.remote_ip,
         user_agent: request.user_agent
       )
@@ -227,12 +243,24 @@ module Shakha
       uri = URI.parse(url)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == "https"
+      http.open_timeout = 5
+      http.read_timeout = 10
 
       request = Net::HTTP::Post.new(uri.request_uri)
       request["Content-Type"] = "application/x-www-form-urlencoded"
       request.body = URI.encode_www_form(body)
 
-      http.request(request)
+      response = http.request(request)
+
+      unless response.is_a?(Net::HTTPSuccess)
+        Rails.logger.error("[Shakha] Google API error: HTTP #{response.code} — #{response.body.truncate(500)}")
+        raise GoogleOAuthError, "Google returned HTTP #{response.code}"
+      end
+
+      response
+    rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, SocketError => e
+      Rails.logger.error("[Shakha] Network error contacting Google: #{e.message}")
+      raise GoogleOAuthError, "Unable to reach Google authentication service"
     end
   end
 end

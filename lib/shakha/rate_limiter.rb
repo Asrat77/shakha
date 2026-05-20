@@ -23,16 +23,10 @@ module Shakha
       return unless Shakha.config.rate_limiting_enabled
 
       cache_key = "shakha-rate:#{key}:#{request.remote_ip}"
+      count = Rails.cache.increment(cache_key, 1, expires_in: period.seconds)
 
-      count = Rails.cache.read(cache_key).to_i + 1
-
-      if count == 1
-        Rails.cache.write(cache_key, count, expires_in: period.seconds)
-      elsif count > max
+      if count > max
         render json: { error: "Too many requests. Try again later." }, status: :too_many_requests
-        return
-      else
-        Rails.cache.write(cache_key, count, expires_in: period.seconds)
       end
     end
   end

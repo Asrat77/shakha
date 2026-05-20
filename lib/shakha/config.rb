@@ -12,7 +12,8 @@ module Shakha
                   :signing_key,
                   :verification_key,
                   :key_id,
-                  :rate_limiting_enabled
+                  :rate_limiting_enabled,
+                  :allowed_redirect_origins
 
     def initialize
       @session_lifetime = 30.days

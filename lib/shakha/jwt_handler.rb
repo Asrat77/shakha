@@ -89,7 +89,7 @@ module Shakha
         return signing_key&.public_key if signing_key
 
         public_material = Shakha.config.verification_key
-        return nil unless public_material
+        return nil unless public_materiall
 
         if public_material.start_with?("-----BEGIN")
           OpenSSL::PKey::EC.new(public_material)
