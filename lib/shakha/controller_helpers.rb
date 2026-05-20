@@ -7,15 +7,14 @@ module Shakha
     extend ActiveSupport::Concern
 
     included do
-      helper_method :current_session, :current_user, :signed_in?
+      helper_method :current_user, :current_session, :signed_in?
     end
 
     private
 
     def current_session
       return @current_session if defined?(@current_session)
-
-      @current_session = find_session || authenticate_from_bearer || authenticate_from_cookie
+      @current_session = find_session_from_cookie || find_session_from_bearer
     end
 
     def current_user
@@ -29,42 +28,24 @@ module Shakha
     def authenticate!
       return if signed_in?
 
-      redirect_to shakha.new_auth_path(return_to: request.fullpath)
+      respond_to do |format|
+        format.html { redirect_to shakha.new_auth_path(return_to: request.fullpath) }
+        format.json { render json: { error: "Authentication required" }, status: :unauthorized }
+      end
     end
 
-    def authenticate_from_bearer
-      return unless (token = bearer_token)
-
-      payload = Shakha.verify_token(token)
-      find_session_by_jti(payload["jti"])
-    end
-
-    def authenticate_from_cookie
-      find_session_by_token(session_token)
-    end
-
-    def bearer_token
-      pattern = /^Bearer /
-      header = request.headers["Authorization"]
-      return unless header&.match?(pattern)
-
-      header.gsub(pattern, "")
-    end
-
-    def session_token
-      request.cookie_jar.encrypted[:shakha_session_token]
-    end
-
-    def find_session
-      return unless (token = session_token)
-
+    def find_session_from_cookie
+      token = cookies.encrypted[:shakha_session_token]
+      return unless token
       Shakha::Session.active.find_by(token: token)
     end
 
-    def find_session_by_jti(jti)
-      return unless jti
+    def find_session_from_bearer
+      header = request.headers["Authorization"]
+      return unless header&.start_with?("Bearer ")
 
-      Shakha::Session.active.find_by(jti: jti)
+      token = header.delete_prefix("Bearer ")
+      Shakha::Session.active.find_by(token: token)
     end
   end
 end
