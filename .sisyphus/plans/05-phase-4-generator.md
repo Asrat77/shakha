@@ -56,10 +56,11 @@ module Shakha
         say "     #{Shakha.config.app_origin}/auth/shakha/google/callback", :cyan
         say "  ──────────────────────────────────", :green
         say ""
-        say "  React usage:", :cyan
-        say '    <a href="https://api.yourapp.com/auth/shakha/google/authorize?return_to=https://app.yourapp.com/login">'
-        say "      Sign in with Google"
-        say "    </a>"
+        say "  Tell your frontend dev:", :cyan
+        say '    Sign in:  <a href="#{Shakha.config.app_origin}/auth/shakha/google">'
+        say "    Session:  GET #{Shakha.config.app_origin}/auth/shakha/session"
+        say "    Auth:     Authorization: Bearer <token>"
+        say "    Sign out: DELETE #{Shakha.config.app_origin}/auth/shakha/sign_out"
       end
 
       private

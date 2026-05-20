@@ -20,30 +20,31 @@ Strip service infrastructure. Keep the JSON API. Add the SPA token redirect flow
 ```ruby
 # lib/shakha/engine.rb
 routes do
-  # Optional sign-in page (for Rails monoliths, ignored by SPAs)
   root to: "auth#new"
 
-  # OAuth flow (provider-scoped)
-  get  ":provider/authorize" => "auth#authorize"
-  get  ":provider/callback"  => "auth#callback"
+  # OAuth flow — just the provider name, no /authorize suffix
+  get  ":provider"          => "auth#authorize"
+  get  ":provider/callback" => "auth#callback"
 
-  # Session management (JSON API — used by SPAs)
-  get  "session"       => "session#show"     # Current user info
-  get  "session/check" => "session#check"    # Is session valid? (lightweight)
-  delete "session"      => "session#destroy"  # Sign out
+  # Session management (JSON API)
+  get  "session"        => "session#show"
+  get  "session/check"  => "session#check"
 
-  # Error page (HTML fallback)
+  # Sign out
+  delete "sign_out" => "auth#destroy"
+
+  # Error page
   get "error" => "auth#error"
 end
 ```
 
-URL helpers:
-```ruby
-shakha.new_auth_path                              # /auth/shakha
-shakha.authorize_path(provider: :google)          # /auth/shakha/google/authorize
-shakha.callback_path(provider: :google)           # /auth/shakha/google/callback
-shakha.session_path                               # /auth/shakha/session
-shakha.destroy_session_path                       # /auth/shakha/session
+URLs the frontend dev needs:
+```
+/auth/shakha/google          — sign in with Google
+/auth/shakha/github          — sign in with GitHub
+/auth/shakha/session          — get current user (JSON)
+/auth/shakha/session/check    — is session valid? (lightweight JSON)
+/auth/shakha/sign_out         — sign out (DELETE)
 ```
 
 ---

@@ -17,7 +17,7 @@ module Shakha
     end
 
     test "authorize redirects to Google with correct params" do
-      get "/auth/shakha/google/authorize?return_to=https://app.yourapp.com/login"
+      get "/auth/shakha/google?return_to=https://app.yourapp.com/login"
 
       assert_response :redirect
       redirect_url = response.redirect_url
@@ -30,12 +30,10 @@ module Shakha
     end
 
     test "callback returns token in redirect URL for SPA" do
-      # Mock Google's token endpoint
       id_token = generate_test_id_token(sub: "google_123", email: "test@example.com")
       stub_google_token_endpoint(id_token: id_token)
 
-      # First authorize to set PKCE cookie
-      get "/auth/shakha/google/authorize?return_to=https://app.yourapp.com/login"
+      get "/auth/shakha/google?return_to=https://app.yourapp.com/login"
       state = extract_state_from_cookie
 
       # Simulate Google callback

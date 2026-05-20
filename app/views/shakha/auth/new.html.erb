@@ -17,7 +17,7 @@
 
     <div class="sh-card__body">
       <% @providers.each do |provider| %>
-        <%= link_to shakha.send("#{provider}_authorize_path"),
+        <%= link_to "/auth/shakha/#{provider}",
                     class: "sh-btn sh-btn--#{provider}",
                     data: { turbo: false } do %>
           Continue with <%= provider.to_s.titleize %>

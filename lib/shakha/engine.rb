@@ -11,13 +11,13 @@ module Shakha
     routes do
       root to: "auth#new"
 
-      get  ":provider/authorize" => "auth#authorize"
-      get  ":provider/callback"  => "auth#callback"
-      delete "sign_out"           => "auth#destroy"
-      get  "error"                => "auth#error"
+      get  ":provider"          => "auth#authorize"
+      get  ":provider/callback" => "auth#callback"
+      delete "sign_out"         => "auth#destroy"
+      get  "error"              => "auth#error"
 
-      get  "session"        => "session#show"
-      get  "session/check"  => "session#check"
+      get "session"        => "session#show"
+      get "session/check"  => "session#check"
     end
   end
 end
