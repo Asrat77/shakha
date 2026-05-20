@@ -6,7 +6,7 @@ module Shakha
 
     included do
       before_action :check_rate_limit_authorize, only: [:authorize]
-      before_action :check_rate_limit_token, only: [:token]
+      before_action :check_rate_limit_callback, only: [:callback]
     end
 
     private
@@ -15,8 +15,8 @@ module Shakha
       check_rate_limit("authorize", max: 20, period: 1.minute)
     end
 
-    def check_rate_limit_token
-      check_rate_limit("token", max: 10, period: 1.minute)
+    def check_rate_limit_callback
+      check_rate_limit("callback", max: 10, period: 1.minute)
     end
 
     def check_rate_limit(key, max:, period:)

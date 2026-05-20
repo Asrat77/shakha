@@ -7,7 +7,7 @@ module Shakha
     extend ActiveSupport::Concern
 
     included do
-      helper_method :current_user, :current_session, :signed_in?
+      helper_method :current_session, :current_user, :signed_in? if respond_to?(:helper_method)
     end
 
     private
@@ -28,13 +28,15 @@ module Shakha
     def authenticate!
       return if signed_in?
 
-      respond_to do |format|
-        format.html { redirect_to shakha.new_auth_path(return_to: request.fullpath) }
-        format.json { render json: { error: "Authentication required" }, status: :unauthorized }
+      if request.format.json?
+        render json: { error: "Authentication required" }, status: :unauthorized
+      else
+        redirect_to "/auth/shakha?return_to=#{CGI.escape(request.fullpath)}"
       end
     end
 
     def find_session_from_cookie
+      return unless respond_to?(:cookies)
       token = cookies.encrypted[:shakha_session_token]
       return unless token
       Shakha::Session.active.find_by(token: token)

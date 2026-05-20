@@ -6,6 +6,7 @@ require "uri"
 module Shakha
   class AuthController < ApplicationController
     include PKCEMixin
+    include RateLimiter
 
     skip_before_action :verify_authenticity_token, only: [:callback]
 
@@ -53,9 +54,10 @@ module Shakha
       current_session&.destroy
       cookies.delete(:shakha_session_token)
 
-      respond_to do |format|
-        format.html { redirect_to params[:return_to].presence || "/" }
-        format.json { render json: { status: "signed_out" } }
+      if request.format.json?
+        render json: { status: "signed_out" }
+      else
+        redirect_to params[:return_to].presence || "/"
       end
     end
 
