@@ -28,7 +28,7 @@ module Shakha
       assert_equal "http://localhost:3000/auth/shakha/google/callback", params["redirect_uri"]
     end
 
-    test "full google flow: authorize, callback, bearer session" do
+    test "full google flow: authorize, callback, exchange code, bearer session" do
       auth = start_google_authorize(return_to: "http://localhost:3000/done")
       stub_google_token(id_token: google_id_token(nonce: auth[:nonce]))
 
@@ -38,15 +38,56 @@ module Shakha
       redirect = URI.parse(response.redirect_url)
       assert_equal "/done", redirect.path
       params = URI.decode_www_form(redirect.query).to_h
-      token = params["token"]
+      code = params["code"]
+      assert code.present?, "expected a one-time code in the redirect"
+      assert_nil params["token"], "the session token must not appear in the URL"
+
+      post "/auth/shakha/session/exchange", params: { code: code }
+      assert_response :success
+      token = JSON.parse(response.body)["token"]
       assert token.present?
-      assert params["expires_at"].present?
 
       get "/auth/shakha/session", headers: { "Authorization" => "Bearer #{token}" }
       assert_response :success
       body = JSON.parse(response.body)
       assert_equal "user@example.com", body["user"]["email"]
       assert_equal "google", body["user"]["provider"]
+    end
+
+    test "an exchange code is single-use" do
+      code = complete_google_flow
+
+      post "/auth/shakha/session/exchange", params: { code: code }
+      assert_response :success
+
+      post "/auth/shakha/session/exchange", params: { code: code }
+      assert_response :unauthorized
+    end
+
+    test "an expired exchange code is rejected" do
+      code = complete_google_flow
+      Shakha::Session.last.update_columns(exchange_code_expires_at: 1.minute.ago)
+
+      post "/auth/shakha/session/exchange", params: { code: code }
+      assert_response :unauthorized
+    end
+
+    test "a blank exchange code is rejected" do
+      post "/auth/shakha/session/exchange", params: { code: "" }
+      assert_response :unauthorized
+    end
+
+    test "token delivery mode puts the token in the redirect URL" do
+      Shakha.config.redirect_token_delivery = :token
+      auth = start_google_authorize(return_to: "http://localhost:3000/done")
+      stub_google_token(id_token: google_id_token(nonce: auth[:nonce]))
+
+      get "/auth/shakha/google/callback", params: { code: "auth_code", state: auth[:state] }
+      params = URI.decode_www_form(URI.parse(response.redirect_url).query).to_h
+      assert params["token"].present?
+      assert_nil params["code"]
+    ensure
+      Shakha.config.redirect_token_delivery = :exchange_code
     end
 
     test "callback with mismatched state fails without creating a session" do
@@ -147,6 +188,14 @@ module Shakha
     end
 
     private
+
+    # Runs authorize + callback and returns the one-time code from the redirect.
+    def complete_google_flow(return_to: "http://localhost:3000/done")
+      auth = start_google_authorize(return_to: return_to)
+      stub_google_token(id_token: google_id_token(nonce: auth[:nonce]))
+      get "/auth/shakha/google/callback", params: { code: "auth_code", state: auth[:state] }
+      URI.decode_www_form(URI.parse(response.redirect_url).query).to_h["code"]
+    end
 
     def start_google_authorize(return_to: nil)
       path = "/auth/shakha/google"

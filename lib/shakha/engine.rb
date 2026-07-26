@@ -12,10 +12,11 @@ module Shakha
       root to: "auth#new"
 
       # Static routes MUST come before dynamic :provider routes
-      get "session"        => "session#show"
-      get "session/check"  => "session#check"
-      delete "sign_out"    => "auth#destroy"
-      get "error"          => "auth#error"
+      get  "session"          => "session#show"
+      get  "session/check"    => "session#check"
+      post "session/exchange" => "session#exchange"
+      delete "sign_out"       => "auth#destroy"
+      get "error"             => "auth#error"
 
       # Dynamic provider routes
       get ":provider"          => "auth#authorize"

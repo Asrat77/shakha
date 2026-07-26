@@ -104,8 +104,14 @@ module Shakha
     def build_return_url(return_to, session_record)
       uri = URI.parse(return_to || "/")
       existing = URI.decode_www_form(uri.query || "").to_h
-      existing["token"] = session_record.token
-      existing["expires_at"] = session_record.expires_at.iso8601
+
+      if Shakha.config.redirect_token_delivery == :token
+        existing["token"] = session_record.token
+        existing["expires_at"] = session_record.expires_at.iso8601
+      else
+        existing["code"] = session_record.generate_exchange_code!
+      end
+
       uri.query = URI.encode_www_form(existing)
       uri.to_s
     end
