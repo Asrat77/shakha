@@ -28,6 +28,13 @@ module Shakha
         say_status :insert, "ApplicationController -> include Shakha::ControllerHelpers", :green
       end
 
+      def enable_cookies_for_api_mode
+        return unless api_only_app?
+
+        application "config.middleware.use ActionDispatch::Cookies"
+        say_status :insert, "config/application.rb -> ActionDispatch::Cookies (API mode)", :green
+      end
+
       def print_post_install
         origin = Shakha.config.app_origin || "http://localhost:3000"
 
@@ -66,6 +73,11 @@ module Shakha
 
       def migration_version
         "[#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}]"
+      end
+
+      def api_only_app?
+        path = File.join(destination_root, "config/application.rb")
+        File.exist?(path) && File.read(path).include?("config.api_only = true")
       end
     end
   end
