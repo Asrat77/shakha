@@ -73,14 +73,15 @@ module Shakha
     end
 
     def find_or_create_user(provider_name, identity)
-      Shakha::User.find_or_create_by!(
+      user = Shakha::User.find_or_initialize_by(
         provider: provider_name.to_s,
         uid: identity[:uid]
-      ) do |user|
-        user.email = identity[:email]
-        user.name = identity[:name]
-        user.picture = identity[:picture]
-      end
+      )
+      user.email = identity[:email]
+      user.name = identity[:name]
+      user.picture = identity[:picture]
+      user.save!
+      user
     end
 
     def create_session(user)

@@ -54,6 +54,18 @@ module Shakha
       assert_equal "google", body["user"]["provider"]
     end
 
+    test "a returning user's profile fields are refreshed, no duplicate created" do
+      create_user(provider: "google", uid: "google_123", email: "old@example.com")
+
+      auth = start_google_authorize
+      stub_google_token(id_token: google_id_token(nonce: auth[:nonce], email: "new@example.com"))
+
+      assert_no_difference -> { Shakha::User.count } do
+        get "/auth/shakha/google/callback", params: { code: "auth_code", state: auth[:state] }
+      end
+      assert_equal "new@example.com", Shakha::User.find_by(uid: "google_123").email
+    end
+
     test "an exchange code is single-use" do
       code = complete_google_flow
 
