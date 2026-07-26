@@ -19,8 +19,8 @@ module Shakha
       get "error"             => "auth#error"
 
       # Dynamic provider routes
-      get ":provider"          => "auth#authorize"
-      get ":provider/callback" => "auth#callback"
+      get ":provider"          => "auth#authorize", as: :authorize
+      get ":provider/callback" => "auth#callback",  as: :callback
     end
   end
 end

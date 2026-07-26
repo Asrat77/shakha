@@ -19,11 +19,10 @@ module Shakha
       provider = resolve_provider
       pkce = create_pkce_bundle
 
-      redirect_uri = "#{Shakha.config.app_origin}/auth/shakha/#{provider.provider_name}/callback"
       auth_url = provider.authorize_url(
         state: pkce[:state],
         code_challenge: pkce[:challenge],
-        redirect_uri: redirect_uri,
+        redirect_uri: callback_redirect_uri(provider),
         nonce: pkce[:nonce]
       )
 
@@ -37,7 +36,7 @@ module Shakha
       token_response = provider.exchange_code(
         code: params[:code],
         code_verifier: pkce_result[:verifier],
-        redirect_uri: "#{Shakha.config.app_origin}/auth/shakha/#{provider.provider_name}/callback"
+        redirect_uri: callback_redirect_uri(provider)
       )
 
       identity = provider.identity_from_response(token_response, expected_nonce: pkce_result[:nonce])
@@ -70,6 +69,14 @@ module Shakha
     def resolve_provider
       provider_name = (params[:provider] || :google).to_sym
       Shakha::Providers.resolve(provider_name)
+    end
+
+    # Built from the engine's actual mount point, so Shakha works no matter
+    # where the host app mounts it.
+    def callback_redirect_uri(provider)
+      origin = URI.parse(Shakha.config.app_origin)
+      callback_url(provider: provider.provider_name,
+                   host: origin.host, port: origin.port, protocol: origin.scheme)
     end
 
     def find_or_create_user(provider_name, identity)
