@@ -144,6 +144,20 @@ module Shakha
       assert_equal "myfrontend.com", URI.parse(response.redirect_url).host
     end
 
+    test "an unknown provider returns 404" do
+      get "/auth/shakha/nonexistent"
+      assert_response :not_found
+      assert_equal "Unknown provider", JSON.parse(response.body)["error"]
+    end
+
+    test "a provider that is not enabled returns 404" do
+      Shakha.config.providers = [ :google ]
+      get "/auth/shakha/github"
+      assert_response :not_found
+    ensure
+      Shakha.config.providers = [ :google, :github ]
+    end
+
     test "session endpoints require auth" do
       get "/auth/shakha/session"
       assert_response :unauthorized

@@ -67,8 +67,10 @@ module Shakha
     private
 
     def resolve_provider
-      provider_name = (params[:provider] || :google).to_sym
-      Shakha::Providers.resolve(provider_name)
+      name = (params[:provider] || :google).to_sym
+      raise ProviderNotFound, name.to_s unless Shakha.config.providers.include?(name)
+
+      Shakha::Providers.resolve(name)
     end
 
     # Built from the engine's actual mount point, so Shakha works no matter

@@ -24,4 +24,5 @@ module Shakha
   class ConfigurationError < StandardError; end
   class PKCEError < StandardError; end
   class OAuthError < StandardError; end
+  class ProviderNotFound < StandardError; end
 end

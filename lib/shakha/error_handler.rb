@@ -8,6 +8,7 @@ module Shakha
 
     included do
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
+      rescue_from Shakha::ProviderNotFound, with: :provider_not_found
       rescue_from Shakha::PKCEError, with: :bad_request
       rescue_from Shakha::OAuthError, with: :bad_gateway
     end
@@ -16,6 +17,10 @@ module Shakha
 
     def not_found(exception)
       render json: { error: exception.message }, status: :not_found
+    end
+
+    def provider_not_found(_exception)
+      render json: { error: "Unknown provider" }, status: :not_found
     end
 
     def unauthorized(exception)
