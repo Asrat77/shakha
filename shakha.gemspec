@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir["lib/**/*", "app/**/*", "README.md", "LICENSE.txt"]
 
-  spec.add_dependency "jwt", "~> 2.7"
+  spec.add_dependency "jwt", ">= 2.10.3", "< 3"
   spec.add_dependency "activesupport", ">= 7.1", "< 10"
   spec.add_dependency "railties", ">= 7.1", "< 10"
 end
