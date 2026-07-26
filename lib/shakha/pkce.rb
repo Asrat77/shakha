@@ -83,5 +83,4 @@ module Shakha
   end
 
   class PKCEError < StandardError; end
-  class GoogleOAuthError < StandardError; end
 end
