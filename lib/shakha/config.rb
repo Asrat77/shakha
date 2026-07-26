@@ -15,7 +15,7 @@ module Shakha
     def initialize
       @session_lifetime = 30.days
       @rate_limiting_enabled = false
-      @providers = [:google]
+      @providers = [ :google ]
     end
   end
 end

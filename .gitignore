@@ -1,4 +1,5 @@
 *.gem
+gemfiles/*.lock
 .bundle/
 vendor/
 .env
@@ -7,3 +8,8 @@ vendor/
 .DS_Store
 log/*.log
 tmp/
+
+# local tooling scratch
+.commandcode/
+.omo/
+.sisyphus/

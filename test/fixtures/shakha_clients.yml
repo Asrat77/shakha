@@ -1,5 +1,0 @@
-one:
-  name: Test App
-  origin: https://test.app.com
-  created_at: <%= 1.day.ago %>
-  updated_at: <%= 1.day.ago %>

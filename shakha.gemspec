@@ -6,8 +6,8 @@ VERSION = File.read(File.expand_path("lib/shakha/version.rb", __dir__)).match(/V
 Gem::Specification.new do |spec|
   spec.name = "shakha"
   spec.version = VERSION
-  spec.authors = ["Asrat"]
-  spec.email = ["asratextras77@gmail.com"]
+  spec.authors = [ "Asrat" ]
+  spec.email = [ "asratextras77@gmail.com" ]
 
   spec.summary = "SPA-first OAuth session broker for Rails — one redirect, one token, done"
   spec.description = <<~DESC

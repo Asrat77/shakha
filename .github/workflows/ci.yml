@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rubocop
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { ruby: "3.1", gemfile: gemfiles/rails_71.gemfile }
+          - { ruby: "3.2", gemfile: gemfiles/rails_71.gemfile }
+          - { ruby: "3.2", gemfile: gemfiles/rails_80.gemfile }
+          - { ruby: "3.3", gemfile: gemfiles/rails_81.gemfile }
+          - { ruby: "3.4", gemfile: gemfiles/rails_80.gemfile }
+          - { ruby: "3.4", gemfile: gemfiles/rails_81.gemfile }
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/${{ matrix.gemfile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bundle exec rake test

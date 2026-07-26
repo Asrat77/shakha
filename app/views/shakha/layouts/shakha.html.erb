@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= yield(:title).presence || "Shakha" %></title>
-  <%= stylesheet_link_tag "shakha", "data-turbo-track": "reload" %>
+  <style><%= Shakha::Engine.root.join("app/assets/stylesheets/shakha.css").read.html_safe %></style>
   <%= csrf_meta_tags %>
   <meta name="theme-color" content="#0f0f23" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">

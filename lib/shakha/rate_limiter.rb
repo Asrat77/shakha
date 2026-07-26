@@ -5,8 +5,8 @@ module Shakha
     extend ActiveSupport::Concern
 
     included do
-      before_action :check_rate_limit_authorize, only: [:authorize]
-      before_action :check_rate_limit_callback, only: [:callback]
+      before_action :check_rate_limit_authorize, only: [ :authorize ]
+      before_action :check_rate_limit_callback, only: [ :callback ]
     end
 
     private

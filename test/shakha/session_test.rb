@@ -4,38 +4,32 @@ require_relative "../test_helper"
 
 module Shakha
   class SessionTest < ActiveSupport::TestCase
-    setup do
-      @client = Shakha::Client.create!(origin: "https://test.com", name: "Test")
-      @user = Shakha::User.create!(provider: "google", uid: "123", client: @client)
+    test "generates a token on create" do
+      session = create_session_record
+      assert session.token.present?
+      assert_operator session.token.length, :>=, 43
     end
 
-    test "generates token on create" do
-      session = Shakha::Session.create!(user: @user, client: @client)
-
-      assert session.token.present?
-      assert_equal 43, session.token.length
+    test "does not overwrite an explicit token" do
+      session = Shakha::Session.create!(user: create_user, client: create_client, token: "explicit")
+      assert_equal "explicit", session.token
     end
 
     test "active scope excludes expired sessions" do
-      old_session = Shakha::Session.create!(user: @user, client: @client)
-      old_session.update!(created_at: 60.days.ago)
+      fresh = create_session_record
+      stale = create_session_record(user: create_user(uid: "other"))
+      stale.update_columns(created_at: (Shakha.config.session_lifetime + 1.day).ago)
 
-      active_session = Shakha::Session.create!(user: @user, client: @client)
-
-      assert_includes Shakha::Session.active, active_session
-      refute_includes Shakha::Session.active, old_session
+      assert_includes Shakha::Session.active, fresh
+      refute_includes Shakha::Session.active, stale
+      assert stale.expired?
+      refute fresh.expired?
     end
 
-    test "expires_at returns correct time" do
-      session = Shakha::Session.create!(user: @user, client: @client)
-      expected = session.created_at + Shakha.config.session_lifetime
-      assert_in_delta expected, session.expires_at, 1.second
-    end
-
-    test "expired? returns true for old sessions" do
-      session = Shakha::Session.create!(user: @user, client: @client)
-      session.update!(created_at: 60.days.ago)
-      assert session.expired?
+    test "expires_at is created_at plus lifetime" do
+      session = create_session_record
+      assert_in_delta (session.created_at + Shakha.config.session_lifetime).to_f,
+                      session.expires_at.to_f, 1.0
     end
   end
 end

@@ -1,9 +1,0 @@
-one:
-  provider: google
-  uid: google_123
-  email: test@example.com
-  name: Test User
-  picture: https://example.com/avatar.png
-  client: one
-  created_at: <%= 1.day.ago %>
-  updated_at: <%= 1.day.ago %>

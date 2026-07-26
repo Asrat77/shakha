@@ -1,8 +1,0 @@
-one:
-  token: test_session_token_abc123
-  user: one
-  client: one
-  ip_address: 127.0.0.1
-  user_agent: Test Agent
-  created_at: <%= 1.hour.ago %>
-  updated_at: <%= 1.hour.ago %>

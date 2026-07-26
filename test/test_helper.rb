@@ -1,25 +1,118 @@
 # frozen_string_literal: true
 
+ENV["RAILS_ENV"] = "test"
+ENV["DATABASE_URL"] = "sqlite3::memory:"
+
+require "rails"
+require "active_record/railtie"
+require "action_controller/railtie"
+require "action_view/railtie"
+
 require_relative "../lib/shakha"
 
-ENV["RAILS_ENV"] = "test"
-ENV["SHAKHA_APP_ORIGIN"] = "https://test.app.com"
-ENV["SHAKHA_SERVICE_SECRET"] = "test_secret_key_for_testing_only"
-
-require "active_support/all"
-require "active_support/test_case"
-require "action_controller/test_case"
-require "action_dispatch/test_process"
-require "minitest/autorun"
-
-class ActiveSupport::TestCase
-  fixtures :all
+class ApplicationRecord < ActiveRecord::Base
+  self.abstract_class = true
 end
 
-module Shakha
-  class TestCase < ActiveSupport::TestCase
-    setup do
-      Shakha.config.service_secret = "test_secret_key_for_testing_only"
-    end
+class DummyApp < Rails::Application
+  config.load_defaults Rails::VERSION::STRING.to_f
+  config.eager_load = false
+  config.secret_key_base = "shakha-test-secret-key-base-not-for-production"
+  config.hosts.clear
+  config.logger = ActiveSupport::Logger.new(File::NULL)
+  config.action_dispatch.show_exceptions = :none
+  config.cache_store = :memory_store
+end
+
+Shakha.setup do |config|
+  config.app_origin = "http://localhost:3000"
+  config.google_client_id = "test_client_id"
+  config.google_client_secret = "test_client_secret"
+  config.github_client_id = "gh_test_id"
+  config.github_client_secret = "gh_test_secret"
+  config.providers = [ :google, :github ]
+end
+
+Rails.application.initialize!
+
+ActiveRecord::Schema.verbose = false
+ActiveRecord::Schema.define do
+  create_table :shakha_clients do |t|
+    t.string :name, null: false
+    t.string :origin, null: false
+    t.timestamps
+    t.index :origin, unique: true
+  end
+
+  create_table :shakha_users do |t|
+    t.references :client, null: false
+    t.string :provider, null: false
+    t.string :uid, null: false
+    t.string :email
+    t.string :name
+    t.string :picture
+    t.timestamps
+    t.index %i[provider uid], unique: true
+    t.index :email
+  end
+
+  create_table :shakha_sessions do |t|
+    t.references :user
+    t.references :client, null: false
+    t.string :token, null: false
+    t.string :ip_address
+    t.string :user_agent
+    t.timestamps
+    t.index :token, unique: true
+    t.index :created_at
+  end
+end
+
+class ProtectedController < ActionController::Base
+  include Shakha::ControllerHelpers
+
+  before_action :authenticate!
+
+  def show
+    render json: { id: current_user.id, email: current_user.email }
+  end
+end
+
+Rails.application.routes.draw do
+  mount Shakha::Engine => "/auth/shakha"
+  get "/protected", to: "protected#show"
+end
+
+require "minitest/autorun"
+require "webmock/minitest"
+
+module ShakhaTestHelpers
+  def create_client(origin: "http://localhost:3000")
+    Shakha::Client.find_or_create_by!(origin: origin) { |c| c.name = "Test App" }
+  end
+
+  def create_user(provider: "google", uid: "uid_123", email: nil)
+    Shakha::User.create!(
+      client: create_client, provider: provider, uid: uid,
+      email: email || "#{uid}@example.com", name: "Test User",
+      picture: "https://example.com/p.jpg"
+    )
+  end
+
+  def create_session_record(user: nil)
+    user ||= create_user
+    Shakha::Session.create!(user: user, client: create_client)
+  end
+end
+
+class ActiveSupport::TestCase
+  include ShakhaTestHelpers
+
+  setup do
+    Shakha::Session.delete_all
+    Shakha::User.delete_all
+    Shakha::Client.delete_all
+    Shakha.config.allowed_redirect_origins = nil
+    Shakha.config.rate_limiting_enabled = false
   end
 end

@@ -8,7 +8,7 @@ module Shakha
     include PKCEMixin
     include RateLimiter
 
-    skip_before_action :verify_authenticity_token, only: [:callback]
+    skip_before_action :verify_authenticity_token, only: [ :callback ]
 
     def new
       @client = find_or_create_client
@@ -44,7 +44,7 @@ module Shakha
       user = find_or_create_user(provider.provider_name, identity)
       session_record = create_session(user)
       set_session_cookie(session_record)
-      redirect_to build_return_url(pkce_result[:return_to], session_record)
+      redirect_to build_return_url(pkce_result[:return_to], session_record), allow_other_host: true
 
     rescue PKCEError, OAuthError => e
       handle_auth_failure(e, pkce_result)
@@ -118,7 +118,8 @@ module Shakha
       if request.format.json? || api_request?
         render json: { error: user_facing_error(exception) }, status: :unauthorized
       else
-        redirect_to "#{return_to}?error=#{URI.encode_www_form_component(user_facing_error(exception))}"
+        redirect_to "#{return_to}?error=#{URI.encode_www_form_component(user_facing_error(exception))}",
+                    allow_other_host: true
       end
     end
 

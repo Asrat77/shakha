@@ -4,11 +4,6 @@ module Shakha
   class Engine < ::Rails::Engine
     isolate_namespace Shakha
 
-    initializer "shakha.add_middleware" do |app|
-      app.middleware.insert_before ActionDispatch::HostAuthorization, ActionDispatch::Cookies
-      app.middleware.insert_before ActionDispatch::HostAuthorization, ActionDispatch::Session::CookieStore, key: '_shakha_session'
-    end
-
     config.after_initialize do
       Shakha::ConfigValidator.validate!(Shakha.config)
     end

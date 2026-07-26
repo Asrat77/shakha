@@ -20,10 +20,9 @@ module Shakha
 
       def inject_application_controller
         path = "app/controllers/application_controller.rb"
-        return unless File.exist?(path)
-
-        content = File.read(path)
-        return if content.include?("Shakha::ControllerHelpers")
+        full_path = File.join(destination_root, path)
+        return unless File.exist?(full_path)
+        return if File.read(full_path).include?("Shakha::ControllerHelpers")
 
         inject_into_class path, "ApplicationController", "  include Shakha::ControllerHelpers\n"
         say_status :insert, "ApplicationController -> include Shakha::ControllerHelpers", :green

@@ -14,7 +14,7 @@ module Shakha
 
     class << self
       def generate_code_verifier
-        SecureRandom.urlsafe_base64(CODE_VERIFIER_LENGTH, padding: false)
+        SecureRandom.urlsafe_base64(CODE_VERIFIER_LENGTH, false)
       end
 
       def generate_code_challenge(verifier)
@@ -32,7 +32,9 @@ module Shakha
       challenge = PKCEMixin.generate_code_challenge(verifier)
       state = SecureRandom.urlsafe_base64(32)
       nonce = SecureRandom.urlsafe_base64(32)
-      return_to = params[:return_to] || "/"
+      # sanitize_return_to is provided by the including controller (AuthController);
+      # validating here means the stored return_to is always safe to redirect to.
+      return_to = sanitize_return_to(params[:return_to])
 
       pkce_record = {
         verifier: verifier,
