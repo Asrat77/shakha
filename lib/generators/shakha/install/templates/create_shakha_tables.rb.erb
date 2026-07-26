@@ -1,14 +1,6 @@
 class CreateShakhaTables < ActiveRecord::Migration<%= migration_version %>
   def change
-    create_table :shakha_clients do |t|
-      t.string :name, null: false
-      t.string :origin, null: false
-      t.timestamps
-      t.index :origin, unique: true
-    end
-
     create_table :shakha_users do |t|
-      t.references :client, null: false, foreign_key: { to_table: :shakha_clients }
       t.string :provider, null: false
       t.string :uid, null: false
       t.string :email
@@ -21,7 +13,6 @@ class CreateShakhaTables < ActiveRecord::Migration<%= migration_version %>
 
     create_table :shakha_sessions do |t|
       t.references :user, foreign_key: { to_table: :shakha_users }
-      t.references :client, null: false, foreign_key: { to_table: :shakha_clients }
       t.string :token, null: false
       t.string :ip_address
       t.string :user_agent

@@ -3,6 +3,7 @@
 module Shakha
   class Config
     attr_accessor :app_origin,
+                  :app_name,
                   :google_client_id,
                   :google_client_secret,
                   :github_client_id,
@@ -13,6 +14,7 @@ module Shakha
                   :allowed_redirect_origins
 
     def initialize
+      @app_name = "Shakha"
       @session_lifetime = 30.days
       @rate_limiting_enabled = false
       @providers = [ :google ]

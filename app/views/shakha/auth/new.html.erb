@@ -1,4 +1,4 @@
-<% content_for :title, "Sign in — #{@client&.name || 'Shakha'}" %>
+<% content_for :title, "Sign in — #{Shakha.config.app_name}" %>
 
 <div class="sh-layout sh-animate-fade">
   <div class="sh-card sh-animate-slide">
@@ -6,13 +6,13 @@
       <div class="sh-brand">
         <div class="sh-brand__icon">S</div>
         <div>
-          <div class="sh-brand__name"><%= @client&.name || "Shakha" %></div>
+          <div class="sh-brand__name"><%= Shakha.config.app_name %></div>
           <div class="sh-brand__subtitle">Secure authentication</div>
         </div>
       </div>
 
       <h1 class="sh-heading sh-heading--center">Welcome back</h1>
-      <p class="sh-subheading">Sign in to continue to <%= @client&.name || "your app" %></p>
+      <p class="sh-subheading">Sign in to continue to <%= Shakha.config.app_name %></p>
     </div>
 
     <div class="sh-card__body">

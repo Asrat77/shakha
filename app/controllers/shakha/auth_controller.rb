@@ -11,7 +11,6 @@ module Shakha
     skip_before_action :verify_authenticity_token, only: [ :callback ]
 
     def new
-      @client = find_or_create_client
       @return_to = sanitize_return_to(params[:return_to])
       @providers = Shakha.config.providers
     end
@@ -77,7 +76,6 @@ module Shakha
         provider: provider_name.to_s,
         uid: identity[:uid]
       ) do |user|
-        user.client = find_or_create_client
         user.email = identity[:email]
         user.name = identity[:name]
         user.picture = identity[:picture]
@@ -87,7 +85,6 @@ module Shakha
     def create_session(user)
       Shakha::Session.create!(
         user: user,
-        client: find_or_create_client,
         ip_address: request.remote_ip,
         user_agent: request.user_agent
       )
@@ -146,14 +143,6 @@ module Shakha
 
     def allowed_origin?(origin)
       Shakha.config.allowed_redirect_origins&.include?(origin) || false
-    end
-
-    def find_or_create_client
-      origin = request.origin || Shakha.config.app_origin
-      origin_uri = URI.parse(origin).origin
-      Shakha::Client.find_or_create_by!(origin: origin_uri) do |client|
-        client.name = URI.parse(origin).host
-      end
     end
 
     def user_facing_error(exception)

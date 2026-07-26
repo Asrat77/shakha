@@ -11,7 +11,7 @@ module Shakha
     end
 
     test "does not overwrite an explicit token" do
-      session = Shakha::Session.create!(user: create_user, client: create_client, token: "explicit")
+      session = Shakha::Session.create!(user: create_user, token: "explicit")
       assert_equal "explicit", session.token
     end
 

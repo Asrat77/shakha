@@ -5,7 +5,7 @@ require_relative "../test_helper"
 module Shakha
   class UserTest < ActiveSupport::TestCase
     test "requires provider and uid" do
-      user = Shakha::User.new(client: create_client)
+      user = Shakha::User.new
       refute user.valid?
       assert user.errors[:provider].any?
       assert user.errors[:uid].any?
@@ -13,10 +13,10 @@ module Shakha
 
     test "uid is unique per provider" do
       create_user(provider: "google", uid: "dup")
-      dup = Shakha::User.new(client: create_client, provider: "google", uid: "dup")
+      dup = Shakha::User.new(provider: "google", uid: "dup")
       refute dup.valid?
 
-      other_provider = Shakha::User.new(client: create_client, provider: "github", uid: "dup")
+      other_provider = Shakha::User.new(provider: "github", uid: "dup")
       assert other_provider.valid?
     end
 

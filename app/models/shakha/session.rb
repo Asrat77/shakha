@@ -5,7 +5,6 @@ module Shakha
     self.table_name = "shakha_sessions"
 
     belongs_to :user, class_name: "Shakha::User", optional: true
-    belongs_to :client, class_name: "Shakha::Client"
 
     before_create :generate_token
 

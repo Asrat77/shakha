@@ -37,15 +37,7 @@ Rails.application.initialize!
 
 ActiveRecord::Schema.verbose = false
 ActiveRecord::Schema.define do
-  create_table :shakha_clients do |t|
-    t.string :name, null: false
-    t.string :origin, null: false
-    t.timestamps
-    t.index :origin, unique: true
-  end
-
   create_table :shakha_users do |t|
-    t.references :client, null: false
     t.string :provider, null: false
     t.string :uid, null: false
     t.string :email
@@ -58,7 +50,6 @@ ActiveRecord::Schema.define do
 
   create_table :shakha_sessions do |t|
     t.references :user
-    t.references :client, null: false
     t.string :token, null: false
     t.string :ip_address
     t.string :user_agent
@@ -87,13 +78,9 @@ require "minitest/autorun"
 require "webmock/minitest"
 
 module ShakhaTestHelpers
-  def create_client(origin: "http://localhost:3000")
-    Shakha::Client.find_or_create_by!(origin: origin) { |c| c.name = "Test App" }
-  end
-
   def create_user(provider: "google", uid: "uid_123", email: nil)
     Shakha::User.create!(
-      client: create_client, provider: provider, uid: uid,
+      provider: provider, uid: uid,
       email: email || "#{uid}@example.com", name: "Test User",
       picture: "https://example.com/p.jpg"
     )
@@ -101,7 +88,7 @@ module ShakhaTestHelpers
 
   def create_session_record(user: nil)
     user ||= create_user
-    Shakha::Session.create!(user: user, client: create_client)
+    Shakha::Session.create!(user: user)
   end
 end
 
@@ -111,7 +98,6 @@ class ActiveSupport::TestCase
   setup do
     Shakha::Session.delete_all
     Shakha::User.delete_all
-    Shakha::Client.delete_all
     Shakha.config.allowed_redirect_origins = nil
     Shakha.config.rate_limiting_enabled = false
   end
