@@ -5,7 +5,7 @@ module Shakha
     include ErrorHandler
     include ControllerHelpers
 
-    protect_from_forgery with: :exception
+    protect_from_forgery with: :exception, unless: -> { request.format.json? }
 
     layout -> { false if request.format == :json }
 
