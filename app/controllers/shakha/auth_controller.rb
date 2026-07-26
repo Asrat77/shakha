@@ -23,7 +23,8 @@ module Shakha
       auth_url = provider.authorize_url(
         state: pkce[:state],
         code_challenge: pkce[:challenge],
-        redirect_uri: redirect_uri
+        redirect_uri: redirect_uri,
+        nonce: pkce[:nonce]
       )
 
       redirect_to auth_url, allow_other_host: true
@@ -39,7 +40,7 @@ module Shakha
         redirect_uri: "#{Shakha.config.app_origin}/auth/shakha/#{provider.provider_name}/callback"
       )
 
-      identity = provider.identity_from_response(token_response)
+      identity = provider.identity_from_response(token_response, expected_nonce: pkce_result[:nonce])
       user = find_or_create_user(provider.provider_name, identity)
       session_record = create_session(user)
       set_session_cookie(session_record)

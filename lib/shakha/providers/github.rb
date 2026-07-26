@@ -14,7 +14,9 @@ module Shakha
         :github
       end
 
-      def authorize_url(state:, code_challenge:, redirect_uri:)
+      # GitHub OAuth has no nonce concept; the keyword is accepted for a
+      # uniform provider interface and ignored.
+      def authorize_url(state:, code_challenge:, redirect_uri:, nonce: nil)
         params = {
           client_id: Shakha.config.github_client_id,
           redirect_uri: redirect_uri,
@@ -36,7 +38,7 @@ module Shakha
         JSON.parse(response.body)
       end
 
-      def identity_from_response(token_response)
+      def identity_from_response(token_response, expected_nonce: nil)
         access_token = token_response["access_token"]
         raise OAuthError, "No access_token received" unless access_token
 

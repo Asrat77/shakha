@@ -59,6 +59,17 @@ module Shakha
       assert_includes response.redirect_url, "error="
     end
 
+    test "callback with a mismatched id_token nonce fails without creating a session" do
+      auth = start_google_authorize
+      stub_google_token(id_token: google_id_token(nonce: "wrong-nonce"))
+
+      assert_no_difference -> { Shakha::Session.count } do
+        get "/auth/shakha/google/callback", params: { code: "auth_code", state: auth[:state] }
+      end
+      assert_response :redirect
+      assert_includes response.redirect_url, "error="
+    end
+
     test "callback without a PKCE cookie fails" do
       assert_no_difference -> { Shakha::Session.count } do
         get "/auth/shakha/google/callback", params: { code: "auth_code", state: "whatever" }

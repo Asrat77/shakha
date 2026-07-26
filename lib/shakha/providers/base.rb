@@ -3,7 +3,7 @@
 module Shakha
   module Providers
     class Base
-      def authorize_url(state:, code_challenge:, redirect_uri:)
+      def authorize_url(state:, code_challenge:, redirect_uri:, nonce: nil)
         raise NotImplementedError
       end
 
@@ -11,7 +11,7 @@ module Shakha
         raise NotImplementedError
       end
 
-      def identity_from_response(token_response)
+      def identity_from_response(token_response, expected_nonce: nil)
         raise NotImplementedError
       end
 
