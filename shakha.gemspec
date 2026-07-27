@@ -25,11 +25,12 @@ Gem::Specification.new do |spec|
   spec.metadata = {
     "homepage_uri" => spec.homepage,
     "source_code_uri" => spec.homepage,
+    "changelog_uri" => "#{spec.homepage}/blob/master/CHANGELOG.md",
     "bug_tracker_uri" => "#{spec.homepage}/issues",
     "rubygems_mfa_required" => "true"
   }
 
-  spec.files = Dir["lib/**/*", "app/**/*", "README.md", "LICENSE.txt"]
+  spec.files = Dir["lib/**/*", "app/**/*", "README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE.txt"]
 
   spec.add_dependency "jwt", ">= 2.10.3", "< 3"
   spec.add_dependency "activesupport", ">= 7.1", "< 10"
