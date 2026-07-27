@@ -7,6 +7,20 @@ versions may include breaking changes; these are called out below.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-07-27
+
+First public release of the reworked gem.
+
+### Added
+- Rewritten README, `CHANGELOG.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+  issue/PR templates, and Dependabot.
+
+### Changed
+- Gemspec: accurate summary/description, GitHub homepage, `source_code_uri` /
+  `changelog_uri` / `bug_tracker_uri`, `rubygems_mfa_required`, and an explicit
+  packaged-file manifest.
+- Removed superseded planning directories from the repo (kept in git history).
+
 ## [0.7.0] — 2026-07-26
 
 Security hardening. Several changes are breaking; there are no production
@@ -80,7 +94,8 @@ installs of the intermediate 0.6.0 to migrate.
 - Initial prototype: Google OAuth broker with PKCE, database sessions, and a
   sign-in page.
 
-[Unreleased]: https://github.com/Asrat77/shakha/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/Asrat77/shakha/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Asrat77/shakha/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Asrat77/shakha/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Asrat77/shakha/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Asrat77/shakha/compare/v0.3.0...v0.5.0
