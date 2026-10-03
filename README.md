@@ -151,6 +151,8 @@ All paths are relative to the mount point (`/auth/shakha` above).
 | GET | `/session` | cookie or bearer | Current user: `{ user: {...}, session: {...} }` |
 | GET | `/session/check` | cookie or bearer | Lightweight `{ status: "active" }` / `401 { status: "expired" }` |
 | DELETE | `/sign_out` | cookie or bearer | Destroy the session |
+| GET | `/sessions` | cookie or bearer | Your active sessions, newest first: `{ sessions: [{ id, ip_address, user_agent, created_at, current }] }` |
+| DELETE | `/sessions/:id` | cookie or bearer | Revoke one of your sessions (`404` if it isn't yours) |
 
 ## Configuration reference
 

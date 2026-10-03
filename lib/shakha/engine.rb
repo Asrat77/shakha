@@ -15,6 +15,8 @@ module Shakha
       get  "session"          => "session#show"
       get  "session/check"    => "session#check"
       post "session/exchange" => "session#exchange"
+      get    "sessions"       => "sessions#index",   defaults: { format: :json }
+      delete "sessions/:id"   => "sessions#destroy", defaults: { format: :json }, as: :revoke_session
       delete "sign_out"       => "auth#destroy"
       get "error"             => "auth#error"
 
