@@ -31,5 +31,15 @@ module Shakha
       assert_in_delta (session.created_at + Shakha.config.session_lifetime).to_f,
                       session.expires_at.to_f, 1.0
     end
+
+    test "for returns a user's active sessions newest first" do
+      user = create_user
+      older = Shakha::Session.create!(user: user, created_at: 2.days.ago)
+      newer = Shakha::Session.create!(user: user)
+      Shakha::Session.create!(user: user, created_at: (Shakha.config.session_lifetime + 1.day).ago)
+      create_session_record(user: create_user(uid: "other"))
+
+      assert_equal [ newer, older ], Shakha::Session.for(user).to_a
+    end
   end
 end

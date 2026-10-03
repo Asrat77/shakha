@@ -19,17 +19,20 @@ Shakha.setup do |config|
   # (simpler, but the token is exposed in history/logs/Referer).
   # config.redirect_token_delivery = :token
 
-  # Google OAuth (required)
+<% if providers.include?("google") -%>
+  # Google OAuth
   config.google_client_id     = ENV["GOOGLE_CLIENT_ID"]
   config.google_client_secret = ENV["GOOGLE_CLIENT_SECRET"]
 
-  # GitHub OAuth (optional — remove from providers if unused)
+<% end -%>
+<% if providers.include?("github") -%>
+  # GitHub OAuth
   config.github_client_id     = ENV["GITHUB_CLIENT_ID"]
   config.github_client_secret = ENV["GITHUB_CLIENT_SECRET"]
 
+<% end -%>
   # Enabled providers
-  # config.providers = [:google]                # Google only
-  config.providers = [:google, :github]          # Both
+  config.providers = [ <%= providers.map { |p| ":#{p}" }.join(", ") %> ]
 
   # Session lifetime (default: 30 days)
   # config.session_lifetime = 30.days

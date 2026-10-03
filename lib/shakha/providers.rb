@@ -11,9 +11,29 @@ module Shakha
       github: "Shakha::Providers::GitHub"
     }.freeze
 
-    def self.resolve(name)
-      class_name = PROVIDER_MAP[name.to_sym] || raise(ConfigurationError, "Unknown provider: #{name}")
-      class_name.constantize.new
+    @registry = PROVIDER_MAP.dup
+
+    class << self
+      # Registers a provider under +name+. +klass+ is a Providers::Base
+      # subclass or its name as a String (a String survives code reloading in
+      # development). Registering an existing name replaces it.
+      def register(name, klass)
+        @registry[name.to_sym] = klass
+      end
+
+      def registered
+        @registry.keys
+      end
+
+      def resolve(name)
+        klass = @registry[name.to_sym] || raise(ConfigurationError, "Unknown provider: #{name}")
+        klass = klass.constantize if klass.is_a?(String)
+        klass.new
+      end
+
+      def reset!
+        @registry = PROVIDER_MAP.dup
+      end
     end
   end
 end

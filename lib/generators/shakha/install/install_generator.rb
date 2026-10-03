@@ -8,14 +8,31 @@ module Shakha
       include ActiveRecord::Generators::Migration
       source_root File.expand_path("templates", __dir__)
 
+      BUILT_IN_PROVIDERS = %w[google github].freeze
+
       desc "Installs Shakha — headless OAuth broker for Rails"
+
+      class_option :providers, type: :string, default: "google,github",
+                               desc: "Comma-separated providers to configure (#{BUILT_IN_PROVIDERS.join(', ')})"
+
+      def validate_providers
+        unknown = providers - BUILT_IN_PROVIDERS
+        raise Thor::Error, "Unknown provider(s): #{unknown.join(', ')}. Choose from: #{BUILT_IN_PROVIDERS.join(', ')}" if unknown.any?
+        raise Thor::Error, "--providers must name at least one provider" if providers.empty?
+      end
 
       def copy_migration
         migration_template "create_shakha_tables.rb.erb", "db/migrate/create_shakha_tables.rb"
       end
 
       def copy_initializer
-        template "shakha.rb.erb", "config/initializers/shakha.rb"
+        path = "config/initializers/shakha.rb"
+        if File.exist?(File.join(destination_root, path)) && !options[:force]
+          say_status :exist, path, :blue
+          return
+        end
+
+        template "shakha.rb.erb", path
       end
 
       def inject_application_controller
@@ -30,6 +47,7 @@ module Shakha
 
       def enable_cookies_for_api_mode
         return unless api_only_app?
+        return if File.read(File.join(destination_root, "config/application.rb")).include?("ActionDispatch::Cookies")
 
         application "config.middleware.use ActionDispatch::Cookies"
         say_status :insert, "config/application.rb -> ActionDispatch::Cookies (API mode)", :green
@@ -43,26 +61,23 @@ module Shakha
         say "  #{'─' * 50}", :green
         say ""
         say "  1. Set environment variables:", :yellow
-        say "     GOOGLE_CLIENT_ID", :cyan
-        say "     GOOGLE_CLIENT_SECRET", :cyan
+        providers.each do |provider|
+          say "     #{provider.upcase}_CLIENT_ID / #{provider.upcase}_CLIENT_SECRET", :cyan
+        end
         say ""
-        say "  2. (Optional) GitHub:", :yellow
-        say "     GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET", :cyan
+        say "  2. For SPA: set ALLOWED_REDIRECT_ORIGINS", :yellow
         say ""
-        say "  3. For SPA: set ALLOWED_REDIRECT_ORIGINS", :yellow
-        say ""
-        say "  4. Run migrations:", :yellow
+        say "  3. Run migrations:", :yellow
         say "     bin/rails db:migrate", :cyan
         say ""
-        say "  5. Google Cloud Console redirect URI:", :yellow
-        say "     #{origin}/auth/shakha/google/callback", :cyan
-        say ""
-        say "  6. GitHub OAuth App callback URL:", :yellow
-        say "     #{origin}/auth/shakha/github/callback", :cyan
+        say "  4. OAuth app redirect / callback URLs:", :yellow
+        providers.each do |provider|
+          say "     #{origin}/auth/shakha/#{provider}/callback", :cyan
+        end
         say "  #{'─' * 50}", :green
         say ""
         say "  Tell your frontend dev:", :cyan
-        say "    Sign in:  #{origin}/auth/shakha/google"
+        say "    Sign in:  #{origin}/auth/shakha/#{providers.first}"
         say "    Session:  GET #{origin}/auth/shakha/session"
         say "    Auth:     Authorization: Bearer <token>"
         say "    Sign out: DELETE #{origin}/auth/shakha/sign_out"
@@ -70,6 +85,10 @@ module Shakha
       end
 
       private
+
+      def providers
+        @providers ||= options[:providers].to_s.split(",").map { |p| p.strip.downcase }.reject(&:empty?).uniq
+      end
 
       def migration_version
         "[#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}]"

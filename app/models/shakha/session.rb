@@ -10,6 +10,10 @@ module Shakha
 
     scope :active, -> { where("created_at > ?", Shakha.config.session_lifetime.ago) }
 
+    def self.for(user)
+      active.where(user: user).order(created_at: :desc, id: :desc)
+    end
+
     EXCHANGE_CODE_TTL = 60.seconds
 
     def expired?

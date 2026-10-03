@@ -53,7 +53,10 @@ bin/rails db:migrate
 
 The generator writes a migration and `config/initializers/shakha.rb`, includes
 `Shakha::ControllerHelpers` in your `ApplicationController`, and — for API-only
-apps — adds the cookie middleware Shakha needs.
+apps — adds the cookie middleware Shakha needs. It configures Google and GitHub
+by default; pass `--providers=google` (or `github`) to set up just one. Re-running
+the generator is safe: it won't add a second migration or overwrite your
+initializer.
 
 ### Configuration
 
@@ -103,6 +106,9 @@ useEffect(() => {
 }, []);
 ```
 
+For a complete runnable version (Rails API + Vite/React), see
+[examples/rails-api-react](examples/rails-api-react).
+
 ## Rails monolith usage
 
 Shakha ships a minimal sign-in page and sets an encrypted session cookie, so a
@@ -145,6 +151,8 @@ All paths are relative to the mount point (`/auth/shakha` above).
 | GET | `/session` | cookie or bearer | Current user: `{ user: {...}, session: {...} }` |
 | GET | `/session/check` | cookie or bearer | Lightweight `{ status: "active" }` / `401 { status: "expired" }` |
 | DELETE | `/sign_out` | cookie or bearer | Destroy the session |
+| GET | `/sessions` | cookie or bearer | Your active sessions, newest first: `{ sessions: [{ id, ip_address, user_agent, created_at, current }] }` |
+| DELETE | `/sessions/:id` | cookie or bearer | Revoke one of your sessions (`404` if it isn't yours) |
 
 ## Configuration reference
 
@@ -170,6 +178,13 @@ strings in the database — deleting the row revokes access immediately. See
 [SECURITY.md](SECURITY.md) for the full threat model and how to report a
 vulnerability.
 
+## Instrumentation
+
+Shakha emits `shakha.sign_in`, `shakha.auth_failure`, and `shakha.sign_out`
+through `ActiveSupport::Notifications`, so you can build an audit log without
+patching the engine. See [docs/instrumentation.md](docs/instrumentation.md) for
+payloads and examples.
+
 ## How it compares
 
 - **OmniAuth** — a Rack middleware for the OAuth handshake; you still build
@@ -184,9 +199,10 @@ vulnerability.
 
 A provider implements five methods (`provider_name`, `scopes`, `authorize_url`,
 `exchange_code`, `identity_from_response`) returning an identity hash of
-`{ provider:, uid:, email:, name:, picture: }`. See
-[`Shakha::Providers::Base`](lib/shakha/providers/base.rb) and the Google/GitHub
-implementations alongside it.
+`{ provider:, uid:, email:, name:, picture: }`, and is registered with
+`Shakha::Providers.register(:gitlab, "GitLabProvider")`. See
+[docs/providers.md](docs/providers.md) for the full contract, a worked GitLab
+example, and a testing pattern.
 
 ## Development
 
