@@ -43,6 +43,10 @@ module Shakha
       user = find_or_create_user(provider.provider_name, identity)
       session_record = create_session(user)
       set_session_cookie(session_record)
+      ActiveSupport::Notifications.instrument(
+        "shakha.sign_in",
+        user_id: user.id, provider: provider.provider_name, ip: request.remote_ip
+      )
       redirect_to build_return_url(pkce_result[:return_to], session_record), allow_other_host: true
 
     rescue PKCEError, OAuthError => e
@@ -50,7 +54,10 @@ module Shakha
     end
 
     def destroy
-      current_session&.destroy
+      if current_session
+        ActiveSupport::Notifications.instrument("shakha.sign_out", user_id: current_session.user_id)
+        current_session.destroy
+      end
       cookies.delete(:shakha_session_token)
 
       if request.format.json?
@@ -127,6 +134,10 @@ module Shakha
     end
 
     def handle_auth_failure(exception, pkce_result)
+      ActiveSupport::Notifications.instrument(
+        "shakha.auth_failure",
+        provider: params[:provider]&.to_sym, error: exception.class.name
+      )
       return_to = pkce_result&.dig(:return_to) || "/"
 
       if request.format.json? || api_request?

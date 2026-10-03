@@ -213,6 +213,45 @@ module Shakha
       assert_response :unauthorized
     end
 
+    test "a successful callback emits shakha.sign_in" do
+      events = capture_events("shakha.sign_in") { complete_google_flow }
+
+      assert_equal 1, events.size
+      payload = events.first
+      assert_equal Shakha::User.find_by(uid: "google_123").id, payload[:user_id]
+      assert_equal :google, payload[:provider]
+      assert_equal "127.0.0.1", payload[:ip]
+    end
+
+    test "a failed callback emits shakha.auth_failure" do
+      start_google_authorize
+      events = capture_events("shakha.auth_failure") do
+        get "/auth/shakha/google/callback", params: { code: "auth_code", state: "forged" }
+      end
+
+      assert_equal 1, events.size
+      assert_equal :google, events.first[:provider]
+      assert_equal "Shakha::PKCEError", events.first[:error]
+    end
+
+    test "sign out emits shakha.sign_out with the user id" do
+      session_record = create_session_record
+      events = capture_events("shakha.sign_out") do
+        delete "/auth/shakha/sign_out",
+               headers: { "Authorization" => "Bearer #{session_record.token}", "Accept" => "application/json" }
+      end
+
+      assert_equal [ { user_id: session_record.user_id } ], events
+    end
+
+    test "sign out without a session emits nothing" do
+      events = capture_events("shakha.sign_out") do
+        delete "/auth/shakha/sign_out", headers: { "Accept" => "application/json" }
+      end
+
+      assert_empty events
+    end
+
     private
 
     # Runs authorize + callback and returns the one-time code from the redirect.
@@ -221,6 +260,13 @@ module Shakha
       stub_google_token(id_token: google_id_token(nonce: auth[:nonce]))
       get "/auth/shakha/google/callback", params: { code: "auth_code", state: auth[:state] }
       URI.decode_www_form(URI.parse(response.redirect_url).query).to_h["code"]
+    end
+
+    def capture_events(name)
+      events = []
+      callback = ->(*, payload) { events << payload }
+      ActiveSupport::Notifications.subscribed(callback, name) { yield }
+      events
     end
 
     def start_google_authorize(return_to: nil)

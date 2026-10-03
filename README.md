@@ -170,6 +170,13 @@ strings in the database — deleting the row revokes access immediately. See
 [SECURITY.md](SECURITY.md) for the full threat model and how to report a
 vulnerability.
 
+## Instrumentation
+
+Shakha emits `shakha.sign_in`, `shakha.auth_failure`, and `shakha.sign_out`
+through `ActiveSupport::Notifications`, so you can build an audit log without
+patching the engine. See [docs/instrumentation.md](docs/instrumentation.md) for
+payloads and examples.
+
 ## How it compares
 
 - **OmniAuth** — a Rack middleware for the OAuth handshake; you still build
