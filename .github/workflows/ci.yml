@@ -47,3 +47,27 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - run: bundle exec rake test
+
+  example:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/rails-api-react/api
+    env:
+      GOOGLE_CLIENT_ID: dummy
+      GOOGLE_CLIENT_SECRET: dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: examples/rails-api-react/api
+      - run: bin/rails db:prepare
+      - run: bin/rails server -d -p 3000
+      - name: Wait for the server
+        run: timeout 30 bash -c 'until curl -s -o /dev/null localhost:3000/me; do sleep 1; done'
+      - name: GET /me without a token is 401
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' localhost:3000/me)" = 401
+      - name: GET /auth/shakha/google redirects to Google
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' localhost:3000/auth/shakha/google)" = 302

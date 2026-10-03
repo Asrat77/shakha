@@ -1,0 +1,39 @@
+# frozen_string_literal: true
+
+Shakha.setup do |config|
+  # Your Rails app's origin
+  config.app_origin = ENV.fetch("APP_ORIGIN", "http://localhost:3000")
+
+  # Name shown on the built-in sign-in page (Rails monolith flow)
+  # config.app_name = "My App"
+
+  # Allowed frontend origins for the SPA redirect
+  config.allowed_redirect_origins = ENV.fetch("ALLOWED_REDIRECT_ORIGINS", "http://localhost:5173").split(",")
+
+  # How the session token reaches the frontend after OAuth (default:
+  # :exchange_code). With :exchange_code the callback redirects with a
+  # one-time ?code=..., which the frontend swaps for the token:
+  #   POST /auth/shakha/session/exchange  { "code": "..." }
+  #     -> { "token": "...", "expires_at": "..." }
+  # Set :token to put the token directly in the redirect URL instead
+  # (simpler, but the token is exposed in history/logs/Referer).
+  # config.redirect_token_delivery = :token
+
+  # Google OAuth (required)
+  config.google_client_id     = ENV["GOOGLE_CLIENT_ID"]
+  config.google_client_secret = ENV["GOOGLE_CLIENT_SECRET"]
+
+  # GitHub OAuth (optional — remove from providers if unused)
+  config.github_client_id     = ENV["GITHUB_CLIENT_ID"]
+  config.github_client_secret = ENV["GITHUB_CLIENT_SECRET"]
+
+  # Enabled providers
+  config.providers = [:google]                  # Google only
+  # config.providers = [:google, :github]        # Both
+
+  # Session lifetime (default: 30 days)
+  # config.session_lifetime = 30.days
+
+  # Rate limiting (default: false)
+  # config.rate_limiting_enabled = true
+end

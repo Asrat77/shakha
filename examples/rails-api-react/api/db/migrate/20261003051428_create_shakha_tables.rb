@@ -1,0 +1,27 @@
+class CreateShakhaTables < ActiveRecord::Migration[8.1]
+  def change
+    create_table :shakha_users do |t|
+      t.string :provider, null: false
+      t.string :uid, null: false
+      t.string :email
+      t.string :name
+      t.string :picture
+      t.timestamps
+      t.index [:provider, :uid], unique: true
+      t.index :email
+    end
+
+    create_table :shakha_sessions do |t|
+      t.references :user, foreign_key: { to_table: :shakha_users }
+      t.string :token, null: false
+      t.string :exchange_code
+      t.datetime :exchange_code_expires_at
+      t.string :ip_address
+      t.string :user_agent
+      t.timestamps
+      t.index :token, unique: true
+      t.index :exchange_code, unique: true
+      t.index :created_at
+    end
+  end
+end

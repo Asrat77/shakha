@@ -103,6 +103,9 @@ useEffect(() => {
 }, []);
 ```
 
+For a complete runnable version (Rails API + Vite/React), see
+[examples/rails-api-react](examples/rails-api-react).
+
 ## Rails monolith usage
 
 Shakha ships a minimal sign-in page and sets an encrypted session cookie, so a
