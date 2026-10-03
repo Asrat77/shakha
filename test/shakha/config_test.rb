@@ -22,5 +22,31 @@ module Shakha
     test "validator passes when required values present" do
       assert ConfigValidator.validate!(Shakha.config)
     end
+
+    test "validator requires credentials only for enabled built-in providers" do
+      config = Config.new
+      config.app_origin = "http://localhost:3000"
+      config.providers = [ :github, :gitlab ]
+      config.github_client_id = "id"
+      config.github_client_secret = "secret"
+
+      in_production { assert ConfigValidator.validate!(config) }
+
+      config.github_client_secret = nil
+      error = assert_raises(ConfigurationError) do
+        in_production { ConfigValidator.validate!(config) }
+      end
+      assert_equal "Shakha: missing required configuration: GITHUB_CLIENT_SECRET", error.message
+    end
+
+    private
+
+    def in_production
+      original = Rails.env
+      Rails.env = "production"
+      yield
+    ensure
+      Rails.env = original
+    end
   end
 end

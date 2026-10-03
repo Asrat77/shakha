@@ -53,7 +53,10 @@ bin/rails db:migrate
 
 The generator writes a migration and `config/initializers/shakha.rb`, includes
 `Shakha::ControllerHelpers` in your `ApplicationController`, and — for API-only
-apps — adds the cookie middleware Shakha needs.
+apps — adds the cookie middleware Shakha needs. It configures Google and GitHub
+by default; pass `--providers=google` (or `github`) to set up just one. Re-running
+the generator is safe: it won't add a second migration or overwrite your
+initializer.
 
 ### Configuration
 
