@@ -191,9 +191,10 @@ payloads and examples.
 
 A provider implements five methods (`provider_name`, `scopes`, `authorize_url`,
 `exchange_code`, `identity_from_response`) returning an identity hash of
-`{ provider:, uid:, email:, name:, picture: }`. See
-[`Shakha::Providers::Base`](lib/shakha/providers/base.rb) and the Google/GitHub
-implementations alongside it.
+`{ provider:, uid:, email:, name:, picture: }`, and is registered with
+`Shakha::Providers.register(:gitlab, "GitLabProvider")`. See
+[docs/providers.md](docs/providers.md) for the full contract, a worked GitLab
+example, and a testing pattern.
 
 ## Development
 
