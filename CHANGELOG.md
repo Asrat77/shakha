@@ -7,6 +7,29 @@ versions may include breaking changes; these are called out below.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-10-03
+
+Developer experience and adoption.
+
+### Added
+- `ActiveSupport::Notifications` events: `shakha.sign_in`, `shakha.auth_failure`,
+  and `shakha.sign_out`, documented in `docs/instrumentation.md`.
+- `Shakha::Providers.register(name, klass)` for third-party providers, plus a
+  provider-writing guide (`docs/providers.md`) with a worked GitLab example.
+- `GET /sessions` lists the current user's active sessions (flagging the
+  requesting one) and `DELETE /sessions/:id` revokes one of them.
+  `Shakha::Session.for(user)` returns a user's active sessions newest first.
+- Installer `--providers=google,github` option; the initializer only includes
+  the chosen providers.
+- `examples/rails-api-react`: a runnable Rails API + Vite/React demo, booted in CI.
+
+### Changed
+- Re-running `rails generate shakha:install` no longer creates a second
+  migration, overwrites an existing initializer, or re-adds the cookie
+  middleware.
+- Configuration validation now requires credentials only for enabled built-in
+  providers. A GitHub-only app no longer needs `GOOGLE_CLIENT_ID`.
+
 ## [0.8.0] — 2026-07-27
 
 First public release of the reworked gem.
@@ -94,7 +117,8 @@ installs of the intermediate 0.6.0 to migrate.
 - Initial prototype: Google OAuth broker with PKCE, database sessions, and a
   sign-in page.
 
-[Unreleased]: https://github.com/Asrat77/shakha/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/Asrat77/shakha/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/Asrat77/shakha/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Asrat77/shakha/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Asrat77/shakha/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Asrat77/shakha/compare/v0.5.0...v0.6.0
