@@ -9,5 +9,6 @@ gem "minitest"
 gem "rails", "~> 7.1.0"
 gem "sqlite3", "~> 1.7"
 gem "webmock"
+gem "json", "< 3" # json 3 dropped the quirks_mode option this Rails line passes
 gem "rubocop-rails-omakase", require: false
 gem "bundler-audit", require: false
